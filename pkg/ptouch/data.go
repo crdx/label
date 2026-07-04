@@ -6,34 +6,77 @@ import "fmt"
 // https://download.brother.com/welcome/docp100064/cv_pte550wp750wp710bt_eng_raster_102.pdf
 
 var (
-	cmdInitialize = []byte{0x1b, 0x40}
-	cmdDumpStatus = []byte{0x1b, 0x69, 0x53}
+	cmdInitialize               = []byte{0x1b, 0x40}
+	cmdDumpStatus               = []byte{0x1b, 0x69, 0x53}
+	cmdSetRasterMode            = []byte{0x1b, 0x69, 0x61, 0x01} // 0: ESC/P, 1: Raster, 3: P-touch Template
+	cmdNotifyModePrefix         = []byte{0x1b, 0x69, 0x21}
+	cmdSetPrintPropertyPrefix   = []byte{0x1b, 0x69, 0x7a}
+	cmdSetPrintModePrefix       = []byte{0x1b, 0x69, 0x4d}
+	cmdSetExtendedModePrefix    = []byte{0x1b, 0x69, 0x4b}
+	cmdSetFeedAmountPrefix      = []byte{0x1b, 0x69, 0x64}
+	cmdSetCompressionModePrefix = []byte{0x4d}
+	cmdRasterTransfer           = []byte{0x47}
+	cmdPrintAndEject            = []byte{0x1a}
 )
 
 const (
 	statusOffsetModel      = 4
 	statusOffsetBattery    = 6
+	statusOffsetErrorInfo1 = 8
+	statusOffsetErrorInfo2 = 9
 	statusOffsetMediaWidth = 10
 	statusOffsetMediaType  = 11
 	statusOffsetTapeLength = 17
+	statusOffsetStatusType = 18
 	statusOffsetTapeColor  = 24
 	statusOffsetFontColor  = 25
+)
+
+const (
+	printPropertyEnableBitWidth           = 0x04
+	printPropertyEnableBitRecoverOnDevice = 0x80
 )
 
 type Model int
 
 const modelPTP710BT Model = 0x76 // PT-P710BT
 
+type StatusType int
+
+const (
+	statusTypePrintingCompleted StatusType = 0x01 // Printing completed
+	statusTypeErrorOccurred     StatusType = 0x02 // Error occurred
+	statusTypePowerOff          StatusType = 0x04 // Power off
+)
+
+type Error1Type int
+
+const (
+	error1NoMedia          Error1Type = 0x01 // No media
+	error1CutterJam        Error1Type = 0x04 // Cutter jam
+	error1WeakBattery      Error1Type = 0x08 // Weak battery
+	error1TooHighVoltageAC Error1Type = 0x40 // High-voltage adapter
+)
+
+type Error2Type int
+
+const (
+	error2InvalidMedia Error2Type = 0x01 // Invalid media
+	error2CoverOpen    Error2Type = 0x10 // Cover open
+	error2Hot          Error2Type = 0x20 // Too hot
+)
+
 type TapeWidth int
 
 type MediaType int
 
 const (
-	mediaTypeNone         MediaType = 0    // No tape
-	mediaTypeLaminated    MediaType = 0x01 // Laminated
-	mediaTypeNonLaminated MediaType = 0x03 // Non laminated
-	mediaTypeHeatShirink  MediaType = 0x11 // Heat shrink tube
-	mediaTypeInvalid      MediaType = 0xFF // Invalid tape type
+	mediaTypeNone           MediaType = 0    // No tape
+	mediaTypeLaminated      MediaType = 0x01 // Laminated
+	mediaTypeNonLaminated   MediaType = 0x03 // Non-laminated
+	mediaTypeHeatShrink2To1 MediaType = 0x11 // Heat shrink tube (HS 2:1)
+	mediaTypeHeatShrink3To1 MediaType = 0x17 // Heat shrink tube (HS 3:1)
+	mediaTypeInvalid        MediaType = 0xFF // Invalid tape type
 )
 
 type TapeColor int
@@ -128,7 +171,7 @@ func (self MediaType) String() string {
 		return "Laminated"
 	case mediaTypeNonLaminated:
 		return "Non-laminated"
-	case mediaTypeHeatShirink:
+	case mediaTypeHeatShrink2To1, mediaTypeHeatShrink3To1:
 		return "Heat shrink tube"
 	case mediaTypeInvalid:
 		return "Invalid"
@@ -228,6 +271,64 @@ func (self FontColor) String() string {
 		return "Invalid"
 	default:
 		return unknown(int(self))
+	}
+}
+
+func (self *Status) Errors() []string {
+	var errors []string
+
+	if self.Error1&error1NoMedia != 0 {
+		errors = append(errors, "No media")
+	}
+	if self.Error1&error1CutterJam != 0 {
+		errors = append(errors, "Cutter jam")
+	}
+	if self.Error1&error1WeakBattery != 0 {
+		errors = append(errors, "Weak battery")
+	}
+	if self.Error1&error1TooHighVoltageAC != 0 {
+		errors = append(errors, "AC voltage too high")
+	}
+
+	if self.Error2&error2InvalidMedia != 0 {
+		errors = append(errors, "Invalid media")
+	}
+	if self.Error2&error2CoverOpen != 0 {
+		errors = append(errors, "Cover open")
+	}
+	if self.Error2&error2Hot != 0 {
+		errors = append(errors, "Too hot")
+	}
+
+	return errors
+}
+
+func (self *Status) PrintableDots() (int, error) {
+	switch self.MediaType {
+	case mediaTypeLaminated, mediaTypeNonLaminated:
+	case mediaTypeNone:
+		return 0, fmt.Errorf("no tape loaded")
+	case mediaTypeHeatShrink2To1, mediaTypeHeatShrink3To1:
+		return 0, fmt.Errorf("heat shrink tube is not supported")
+	default:
+		return 0, fmt.Errorf("unsupported media type: %s", self.MediaType)
+	}
+
+	switch self.TapeWidth {
+	case 4:
+		return 24, nil
+	case 6:
+		return 32, nil
+	case 9:
+		return 50, nil
+	case 12:
+		return 70, nil
+	case 18:
+		return 112, nil
+	case 24:
+		return 128, nil
+	default:
+		return 0, fmt.Errorf("unsupported tape width: %dmm", self.TapeWidth)
 	}
 }
 

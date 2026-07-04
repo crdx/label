@@ -1,6 +1,6 @@
 # label
 
-**label** talks to the Brother PT-P710BT over USB or bluetooth.
+**label** prints text labels on the Brother PT-P710BT over USB or bluetooth.
 
 ## Installation
 
@@ -12,10 +12,19 @@ go install crdx.org/label/cmd/label@latest
 
 ```
 Usage:
+    label [options] print <text>
     label [options] status
 ```
 
+Multi-word text must be quoted:
+
+```sh
+label print "hello world"
+```
+
 The printer is auto-detected: USB is tried first, then bluetooth.
+
+Text is rendered with the Go Mono typeface, sized to fill the printable height of the loaded tape (read from the printer). Heat-shrink tube is not supported.
 
 ### USB permissions
 
@@ -44,8 +53,8 @@ bluetoothctl
 
 ## Credits
 
-- [ka2n/ptouchgo](https://github.com/ka2n/ptouchgo) — the driver and status protocol implementation.
-- [robby-cornelissen/pt-p710bt-label-maker](https://github.com/robby-cornelissen/pt-p710bt-label-maker) — bluetooth connection flow.
+- [ka2n/ptouchgo](https://github.com/ka2n/ptouchgo) — the driver and raster protocol implementation.
+- [robby-cornelissen/pt-p710bt-label-maker](https://github.com/robby-cornelissen/pt-p710bt-label-maker) — bluetooth print flow.
 
 ## Contributions
 

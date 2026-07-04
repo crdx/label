@@ -63,7 +63,7 @@ func (self *Printer) Close() {
 	_ = self.Connection.Close()
 }
 
-func (self *Printer) Print(data []byte, rasterLines int, width TapeWidth) error {
+func (self *Printer) Print(data []byte, rasterLines int, width TapeWidth, cut bool) error {
 	if err := self.setRasterMode(); err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func (self *Printer) Print(data []byte, rasterLines int, width TapeWidth) error 
 	if err := self.setPrintProperty(rasterLines, width); err != nil {
 		return err
 	}
-	if err := self.setPrintMode(true, false); err != nil {
+	if err := self.setPrintMode(cut, false); err != nil {
 		return err
 	}
 	if err := self.setExtendedMode(true, false, false, false); err != nil {
