@@ -21,4 +21,7 @@ test:
 build:
     unbuffer go build -trimpath -o dist/label ./cmd/label | gostack
 
+run *args:
+    go run ./cmd/label {{ args }}
+
 check: test fmt lint
