@@ -76,7 +76,7 @@ func (self *Printer) Print(data []byte, rasterLines int, width TapeWidth, cut bo
 	if err := self.setPrintMode(cut, false); err != nil {
 		return err
 	}
-	if err := self.setExtendedMode(true, false, false, false); err != nil {
+	if err := self.setExtendedMode(cut, false, false, false); err != nil {
 		return err
 	}
 	if err := self.setFeedAmount(10); err != nil {
@@ -89,7 +89,12 @@ func (self *Printer) Print(data []byte, rasterLines int, width TapeWidth, cut bo
 	if _, err := self.Connection.Write(data); err != nil {
 		return err
 	}
-	if _, err := self.Connection.Write(cmdPrintAndEject); err != nil {
+
+	printCommand := cmdPrintAndEject
+	if !cut {
+		printCommand = cmdPrint
+	}
+	if _, err := self.Connection.Write(printCommand); err != nil {
 		return err
 	}
 

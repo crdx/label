@@ -17,6 +17,9 @@ func getUsage() string {
 		Usage:
 			$0 [options] print <text>
 			$0 [options] status
+
+		Options:
+			--chain   Don't cut the label
 	`
 }
 
@@ -24,6 +27,7 @@ type Opts struct {
 	Print  bool   `docopt:"print"`
 	Status bool   `docopt:"status"`
 	Text   string `docopt:"<text>"`
+	Chain  bool   `docopt:"--chain"`
 }
 
 func main() {
@@ -132,7 +136,7 @@ func printText(printer ptouch.Printer, opts Opts) error {
 
 	logger.Info("printing on %dmm %s tape", status.TapeWidth, status.MediaType)
 
-	return printer.Print(packed, len(data)/bytesWidth, status.TapeWidth, true)
+	return printer.Print(packed, len(data)/bytesWidth, status.TapeWidth, !opts.Chain)
 }
 
 func row(name string, value string) {

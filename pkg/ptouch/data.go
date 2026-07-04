@@ -16,7 +16,8 @@ var (
 	cmdSetFeedAmountPrefix      = []byte{0x1b, 0x69, 0x64}
 	cmdSetCompressionModePrefix = []byte{0x4d}
 	cmdRasterTransfer           = []byte{0x47}
-	cmdPrintAndEject            = []byte{0x1a}
+	cmdPrint                    = []byte{0x0c} // FF: print without feeding (non-last page)
+	cmdPrintAndEject            = []byte{0x1a} // Control-Z: print with feeding (last page)
 )
 
 const (
