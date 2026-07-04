@@ -87,7 +87,7 @@ func printStatus(printer ptouch.Printer) error {
 	row("Power", fmt.Sprint(status.Battery))
 	row("Tape", tape)
 
-	tapeLength := "continuous"
+	tapeLength := "Continuous"
 	if status.TapeLength != 0 {
 		tapeLength = fmt.Sprintf("%dmm", status.TapeLength)
 	}
