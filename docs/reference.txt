@@ -1,0 +1,1649 @@
+===============================================================================
+
+                     SOFTWARE DEVELOPER'S MANUAL
+                      Raster Command Reference
+
+                       PT-E550W / P750W / P710BT
+
+                            Version 1.02
+
+===============================================================================
+
+The Brother logo is a registered trademark of Brother Industries, Ltd.
+Brother is a registered trademark of Brother Industries, Ltd.
+© 2014 Brother Industries, Ltd. All rights reserved.
+
+Microsoft and Windows are registered trademarks of Microsoft Corporation in
+the United States and other countries.
+
+Each owner whose software title is mentioned in this document has a Software
+License Agreement specific to its proprietary programs.
+
+Any trade names and product names of companies appearing on Brother products,
+related documents and any other materials are all trademarks or registered
+trademarks of those respective companies.
+
+
+IMPORTANT — PLEASE READ CAREFULLY
+-------------------------------------------------------------------------------
+
+Note
+
+This documentation ("Documentation") provides information that will assist you
+in controlling your Printer PT-XXXX (where "XXXX" is the model name).
+
+You may use the Documentation only if you first agree to the following
+conditions. If you do not agree to the following conditions, you may not use
+the Documentation.
+
+
+Condition of Use
+
+You may use and reproduce the Documentation to the extent necessary for your
+own use of your Printer Model ("Purpose"). Unless expressly permitted in the
+Documentation, you may not;
+
+  (i)   copy or reproduce the Documentation for any purpose other than the
+        Purpose,
+  (ii)  modify, translate or adapt the Documentation, and/or redistribute it
+        to any third party,
+  (iii) rent or lease the Documentation to any third party, or,
+  (iv)  remove or alter any copyright notices or proprietary rights legends
+        included within the Documentation.
+
+
+No Warranty
+
+  a. Any updates, upgrades or alteration of the Documentation or Printer Model
+     will be performed at the sole discretion of Brother. Brother may not
+     respond to any request or inquiry about the Documentation.
+
+  b. THIS DOCUMENTATION IS PROVIDED TO YOU "AS IS" WITHOUT WARRANTY OF ANY
+     KIND, WHETHER EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+     IMPLIED WARRANTY OF FITNESS FOR A PARTICULAR PURPOSE. BROTHER DOES NOT
+     REPRESENT OR WARRANT THAT THIS DOCUMENTATION IS FREE FROM ERRORS OR
+     DEFECTS.
+
+  c. IN NO EVENT SHALL BROTHER BE LIABLE FOR ANY DIRECT, INDIRECT, PUNITIVE,
+     INCIDENTAL, SPECIAL OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER,
+     ARISING OUT OF THE USE, INABILITY TO USE, OR THE RESULTS OF USE OF THE
+     DOCUMENTATION OR ANY SOFTWARE PROGRAM OR APPLICATION YOU DEVELOPED IN
+     ACCORDANCE WITH THE DOCUMENTATION.
+
+
+===============================================================================
+                                 CONTENTS
+===============================================================================
+
+  Introduction ......................................................... 1
+  About Raster Commands ................................................ 2
+  1. Printing Using Raster Commands .................................... 3
+  2. Print Data ........................................................ 5
+       2.1 Print data overview ......................................... 5
+       2.2 Sample (analyzing the print data of the test page) .......... 8
+             2.2.1 Preparation .......................................... 8
+             2.2.2 Checking the print data .............................. 8
+             2.2.3 Explanation of print data for the test page ......... 11
+       2.3 Page data details .......................................... 13
+             2.3.1 Resolution .......................................... 13
+             2.3.2 Page size ........................................... 14
+             2.3.3 Feed amount ......................................... 17
+             2.3.4 Maximum and minimum lengths ......................... 18
+             2.3.5 Raster line ......................................... 19
+  3. Print Command List ............................................... 22
+  4. Printing Command Details ......................................... 23
+             NULL         Invalidate .................................. 23
+             ESC @        Initialize .................................. 23
+             ESC i S      Status information request .................. 23
+             ESC i a      Switch dynamic command mode ................. 31
+             ESC i !      Switch automatic status notification mode ... 31
+             ESC i z      Print information command ................... 32
+             ESC i M      Various mode settings ....................... 33
+             ESC i K      Advanced mode settings ...................... 33
+             ESC i d      Specify margin amount (feed amount) ......... 34
+             ESC i A      Specify the page number in "cut each *
+                          labels" ..................................... 34
+             M            Select compression mode ..................... 35
+             G            Raster graphics transfer .................... 37
+             Z            Zero raster graphics ........................ 37
+             FF           Print command ............................... 37
+             Control-Z    Print command with feeding .................. 38
+  5. Flow Charts ...................................................... 39
+       5.1 Concurrent printing normal flow for USB connection ......... 40
+       5.2 Concurrent printing error flow for USB connection
+           (when feeding at the end of the page) ...................... 41
+       5.3 Concurrent printing error flow for USB connection
+           (with a concurrent printing error such as end of tape) ..... 42
+       5.4 Buffered printing normal flow for USB connection ........... 43
+       5.5 Buffered printing error flow for USB connection ............ 44
+       5.6 Normal Flow for Network (Standard TCP/IP port) Connection .. 45
+  Appendix A: USB Specifications ...................................... 46
+  Appendix B: Introducing the Brother Developer Center ............... 47
+
+
+===============================================================================
+INTRODUCTION                                                          [ page 1 ]
+===============================================================================
+
+This material provides the necessary information for directly controlling the
+Brother printer PT-XXXX (where "XXXX" is the model name).
+
+This information is provided assuming that the user has full understanding of
+the operating system being used and basic mastery of USB in a developer's
+environment.
+
+Details concerning the USB interface are not described in this material. If a
+USB interface is being used, refer to "Appendix A: USB Specifications" to
+prepare the interface.
+
+Read the model names that appear in the screens in this manual as the name of
+your printer.
+
+
+===============================================================================
+ABOUT RASTER COMMANDS                                                 [ page 2 ]
+===============================================================================
+
+Using raster commands an PT-XXXX printer (where "XXXX" is the model name) can
+be used to print without using our printer driver.
+
+This operation is useful in the following situations.
+
+  • When printing from an operating system other than Windows
+    (Example: When printing from a Linux computer or mobile terminal)
+  • When adding print functions to an existing system
+
+In addition, printing can be performed with advanced settings.
+
+In this material, "raster" refers to binary bitmap data (collection of dots).
+
+Refer to this material to print by sending initialization commands and control
+codes together with raster data to the PT-XXXX printer (hereafter, referred to
+as "printer"). This manual describes the procedure for adding these codes and
+sending the data.
+
+
+===============================================================================
+1. PRINTING USING RASTER COMMANDS                                     [ page 3 ]
+===============================================================================
+
+The printing procedure is described below. For detailed flow charts, refer to
+"5. Flow Charts". For details on each command, refer to "4. Printing Command
+Details".
+
+Overview of the exchange between the computer/mobile terminal and the printer:
+
+  (1) Open the port
+  (2) Send the status              → (Confirm the printer status.)
+  (3) Send the print data
+  (4) Print                        (performed by the printer)
+  (5) Send the status              → (Confirm that printing is completed.)
+  (6) Close the port
+
+-------------------------------------------------------------------------------
+                                                                     [ page 4 ]
+
+(1) Open the USB/network port
+    Open the USB/network port in the operating environment. The procedure for
+    opening the USB/network port is not described in this material.
+
+(2) Confirm the printer status sent from the printer
+    The "status information request" command is sent to the printer, the
+    status information received from the printer is analyzed, and then the
+    status of the printer is determined.
+    For details on the "status information request" command and on the
+    definitions of "status", refer to "Status information request" in
+    "4. Printing Command Details".
+
+(3) Send the print data
+    If the status analysis confirms that media compatible with the print data
+    is loaded into the printer and that no error has occurred, the print data
+    is sent. The structure of the print data is explained in the next section,
+    "2. Print Data".
+
+    Note:
+    No command can be sent to the printer after the print data is transmitted
+    and until the completion of printing is confirmed. Even the "status
+    information request" command cannot be sent during printing.
+
+(4) Print the data
+
+(5) Confirm that printing is completed
+    When printing is completed, the status is received from the printer.
+    If this status is analyzed to confirm that printing is completed, printing
+    one page is considered finished.
+    If the print job has multiple pages, (2) through (4) are repeated.
+
+(6) Close the USB/network port
+    After all printing is finished, close the USB/network port.
+
+    Note:
+    In order to print at high speed when a USB port is used to send
+    uncompressed raster data, the Brother PT-XXXX starts printing when it
+    starts to receive print data, instead of waiting for a print command
+    (concurrent printing).
+    For the processing flow, for example when managing errors, refer to
+    "5. Flow Charts".
+
+
+===============================================================================
+2. PRINT DATA                                                         [ page 5 ]
+===============================================================================
+
+2.1 Print data overview
+-------------------------------------------------------------------------------
+
+The print data is constructed of the following: (1) initialization commands,
+(2) control codes, (3) raster data, and (4) print commands. If the print job
+consists of multiple pages, (2) through (4) are repeated.
+
+
+(1) Initialization commands
+    Specified only once at the beginning of the job.
+
+  Seq  Command Name   Description / Example
+  ---  ------------   ---------------------------------------------------------
+   1   Invalidate     Sends a 100-byte invalidate command, and then resets the
+                      printer to the receiving state.
+   2   Initialize     Initializes for printing.
+                      1Bh, 40h (Fixed)
+
+
+(2) Control codes
+    Added at the beginning of each page and sent for each page.
+
+  Seq  Command Name              Description / Example
+  ---  -----------------------   ----------------------------------------------
+   1   Switch dynamic command    Switches the printer to raster mode.
+       mode                      1Bh, 69h, 61h, 01h
+
+   2   Switch automatic status   Dynamically switches whether an automatic
+       notification mode         status notification is given during printing.
+                                 When an automatic status notification is
+                                 given:
+                                 1Bh, 69h, 21h, 00h
+                                 *The PT-E550W/PT-P750W does not support this
+                                  command.
+
+   3   Print information         Sets the print information for the printer.
+       command                   When printing 100 mm on 24-mm-wide tape with
+                                 the 180 dpi model:
+                                 1Bh, 69h, 7Ah, 84h, 00h, 18h, 00h, AAh, 02h,
+                                 00h, 00h, 00h, 00h
+
+   4   Various mode settings     When auto cut is enabled:
+                                 1Bh, 69h, 4Dh, 40h
+
+   5   Specify the page number   When an auto cut setting is effective, specify
+       in "cut each * labels"    the number of sheets for auto cut.
+                                 For each sheets,
+                                 1Bh, 69h, 41h, 01h
+                                 *The PT-P710BT does not support this command.
+
+   6   Advanced mode settings    When chain printing is disabled:
+                                 1BH, 69H, 4B, 08H
+
+   7   Specify margin amount     Specifies the amount of the margins.
+                                 For 2 mm margins on the 180 dpi model:
+                                 1Bh, 69h, 64h, 0Eh, 00h
+                                                                     [ page 6 ]
+   8   Select compression mode   Selects the compression mode for raster
+                                 graphics.
+                                 To send the data compressed to TIFF format:
+                                 4Dh, 02h
+
+-------------------------------------------------------------------------------
+                                                                     [ page 7 ]
+
+(3) Raster data
+    Repeated for each page in the print job.
+
+  Seq  Command Name             Description / Example
+  ---  ----------------------   -----------------------------------------------
+   -   Raster graphics          Sends a raster line that contains data with
+       transfer                 pixels set to "ON".
+
+   -   Zero raster graphics     Sends a raster line with all pixels set to "0".
+                                (Valid only when TIFF is selected as the
+                                compression mode)
+                                5Ah (Fixed)
+
+
+(4) Print commands
+    Specified at the end of the page.
+
+  Seq  Command Name             Description / Example
+  ---  ----------------------   -----------------------------------------------
+   -   Print command            Specifies at the end of a page that is not the
+                                last page.
+                                0Ch (Fixed)
+
+   -   Print command with       Specifies at the end of the last page.
+       feeding                  1Ah (Fixed)
+
+
+-------------------------------------------------------------------------------
+2.2 Sample (analyzing the print data of the test page)               [ page 8 ]
+-------------------------------------------------------------------------------
+
+The print data created by the printer driver is described here.
+
+As an example, we will check the print data created when the [Print Test Page]
+button in the printer Properties dialog box is clicked to print the test page.
+
+Since the print data differs depending on the print settings of the printer,
+refer to this procedure and try creating print data with various print
+settings.
+
+Furthermore, this procedure is for the Windows® 7 operating environment. A
+similar procedure can be performed if you are using a different operating
+system.
+
+
+2.2.1 Preparation
+
+Install the two listed below.
+
+  • Printer driver of the Brother PT-XXXX
+  • Binary file editor
+
+The data that we will analyze in this sample is a binary file. Therefore, use
+a binary file editor to display and check the contents of the binary file.
+
+
+2.2.2 Checking the print data
+
+The procedure for checking the print data is provided below.
+
+  Step 1: Change the port of the printer to "FILE:".
+  Step 2: Print the desired item (in this case, the test page), and then
+          specify the file name.
+  Step 3: Open the created file in the binary file editor to check it.
+
+-------------------------------------------------------------------------------
+                                                                     [ page 9 ]
+
+Step 1: Change the port of the printer to "FILE:".
+  Open the Printers and Faxes folder, and then right-click the printer (in this
+  case, RJ-4030) to display the Properties dialog box. In the Properties dialog
+  box, click the [Ports] tab, select the "FILE:" check box, and then click the
+  [Apply] button.
+
+  [Illustration: [Ports] tab of the printer Properties dialog box]
+
+Step 2: Print the item (in this case, the test page), and then specify the file
+        name.
+  Print the test page with "24mm x 2" selected as the paper size in the print
+  settings.
+  *Diagram below is the print settings for PT-P750W.
+
+-------------------------------------------------------------------------------
+                                                                    [ page 10 ]
+
+  When the test page is printed with the printer, a dialog box appears so that
+  the file name can be specified. (Refer to the illustration below.) After a
+  file name is typed in and the [OK] button is clicked, the printer driver
+  creates the print data and saves it in a file with the specified name.
+
+  [Illustration: Dialog box for specifying the file name]
+
+Step 3: Open the print data in the binary file editor.
+  Open the saved file in the binary file editor. The rows of numbers that
+  appear are the print data. (Refer to the illustration below.)
+  The print data is constructed of the following: (1) initialization commands,
+  (2) control codes, (3) raster data and (4) print commands, which were
+  described in "2.1 Print data overview". For details on the print data, refer
+  to "2.2.3 Explanation of print data for the test page".
+
+  [Illustration: Print data]
+
+
+-------------------------------------------------------------------------------
+2.2.3 Explanation of print data for the test page                   [ page 11 ]
+-------------------------------------------------------------------------------
+
+The print data for the test page outputted in the previous section is described
+below. The following illustration shows the print data created in section
+"2.2.1 Preparation" opened in the binary file editor.
+
+  [Illustration: Print data (Left: PT-P750W, Right: PT-P710BT)]
+
+-------------------------------------------------------------------------------
+                                                                    [ page 12 ]
+
+Descriptions for the numbers in the print data on the previous page are
+provided in the following table. For details on each command, refer to
+"4. Printing Command Details".
+
+  No.  Command Name              Description
+  ---  -----------------------   -----------------------------------------------
+   1   Invalidate                A 100-byte invalidate command is sent.
+
+   2   Initialize                The "initialize" command is sent.
+
+   3   Switch dynamic command    The printer is switched to raster mode.
+       mode                      Send this command before sending raster data
+                                 to the printer.
+
+   4   Job ID setting commands   Internal specification commands.
+                                 Since this is a command for outputting with the
+                                 commercial version driver, it is unnecessary
+                                 for the user to send this command.
+
+   5   Print information         Media size information for the print data is
+       command                   sent.
+                                 This is the command for "24 mm" tape.
+
+   6   Various mode settings     This is a command for specifying a mode.
+       (1Bh + 69h + 4Dh + 00H)   Here, nothing is specified.
+
+   7   Specify the page number   The number of pages printed before
+       in "cut each * labels"    automatically cutting is specified.
+
+   8   Advanced mode settings    This is the command for specifying settings for
+                                 the advanced mode.
+
+   9   Specify margin amount     Specifies the amount of the margins.
+                                 This is the command for "15 dots".
+
+  10   Select compression mode   TIFF compression mode is selected.
+
+  11   Raster data               Raster data continues.
+
+  12   Print command             Since it is not the last page, the print
+                                 command is sent at the end of the page.
+
+  13   Print command with        Since it is the last page, the print command
+       feeding                   with feeding is sent at the end of the page.
+
+  14   Switch automatic status   Dynamically switches whether an automatic
+       notification mode         status notification is given during printing.
+
+
+-------------------------------------------------------------------------------
+2.3 Page data details                                               [ page 13 ]
+-------------------------------------------------------------------------------
+
+2.3.1 Resolution
+
+  Resolution                       Height-to-Width Proportion
+  ------------------------------   --------------------------
+  180 dpi high, 180 dpi wide       1:1
+  180 dpi high, 360 dpi wide       1:2
+
+
+-------------------------------------------------------------------------------
+2.3.2 Page size                                                     [ page 14 ]
+-------------------------------------------------------------------------------
+
+(a) Continuous length tape
+
+  [Diagram: Landscape tape, feeding direction. Numbered dimensions:]
+    1 Width                          2 Length
+    3 Print area width               4 Print area length
+      (maximum printing width)
+    5 Width offset                   6 Length offset
+
+  TZe tape
+  Columns: (1) Width  (2) Length  (3) Print area width
+           (4) Print area length  (5) Width offset  (6) Length offset
+
+  ID   Tape    Design.    (1)        (3)        (5)      (2)   (4)   (6)
+                          Width      Print      Width
+                                     area w.    offset
+  ---  ------  --------   --------   --------   -------  ----  ----  ------
+  263  3.5 mm  3.5 mm     3.40 mm    3.40 mm    0.00 mm  →2.3.4 →2.3.4 →2.3.3
+               0.13"      24 dots    24 dots    0 dots
+  257  6 mm    6 mm       5.90 mm    4.50 mm    0.70 mm  →2.3.4 →2.3.4 →2.3.3
+               0.23"      42 dots    32 dots    5 dots
+  258  9 mm    9 mm       9.00 mm    7.10 mm    0.98 mm  →2.3.4 →2.3.4 →2.3.3
+               0.35"      64 dots    50 dots    7 dots
+  259  12 mm   12 mm      11.9 mm    9.90 mm    0.98 mm  →2.3.4 →2.3.4 →2.3.3
+               0.47"      84 dots    70 dots    7 dots
+  260  18 mm   18 mm      18.1 mm    15.8 mm    1.12 mm  →2.3.4 →2.3.4 →2.3.3
+               0.70"      128 dots   112 dots   8 dots
+  261  24 mm   24 mm      24.0 mm    18.1 mm    2.96 mm  →2.3.4 →2.3.4 →2.3.3
+               0.94"      170 dots   128 dots   21 dots
+
+  Note: For columns (2) Length, (4) Print area length and (6) Length offset,
+  refer to the referenced sections (2.3.4 and 2.3.3).
+
+-------------------------------------------------------------------------------
+                                                                    [ page 15 ]
+
+Heat-Shrink Tube
+
+  ID   Tape       Design.     (1)        (3)        (5)      (2)   (4)   (6)
+                              Width      Print      Width
+                                         area w.    offset
+  ---  ---------  ---------   --------   --------   -------  ----  ----  ------
+  415  HS 5.8 mm  HS 5.8 mm   5.60 mm    3.90 mm    0.80 mm  →2.3.4 →2.3.4 →2.3.3
+                  HS 0.23"    40 dots    28 dots    6 dots
+  416  HS 8.8 mm  HS 8.8 mm   8.70 mm    6.80 mm    1.10 mm  →2.3.4 →2.3.4 →2.3.3
+                  0.34"       62 dots    48 dots    8 dots
+  417  HS 11.7mm  HS 11.7mm   11.6 mm    9.30 mm    1.10 mm  →2.3.4 →2.3.4 →2.3.3
+                  0.46"       82 dots    66 dots    8 dots
+  418  HS 17.7mm  HS 17.7mm   17.8 mm    14.9 mm    1.40 mm  →2.3.4 →2.3.4 →2.3.3
+                  0.69"       126 dots   106 dots   10 dots
+  419  HS 23.6mm  HS 23.6mm   23.7 mm    18.1 mm    2.80 mm  →2.3.4 →2.3.4 →2.3.3
+                  HS 0.93"    168 dots   128 dots   20 dots
+  420  HS 5.2 mm  HS 5.2 mm   5.1 mm     2.82 mm    1.13 mm  →2.3.4 →2.3.4 →2.3.3
+                  HS 0.20"    36 dots    20 dots    8 dots
+  421  HS 9.0 mm  HS 9.0 mm   9 mm       6.21 mm    1.41 mm  →2.3.4 →2.3.4 →2.3.3
+                  HS 0.35"    64 dots    44 dots    10 dots
+  422  HS 11.2mm  HS 11.2mm   11.3 mm    7.06 mm    2.12 mm  →2.3.4 →2.3.4 →2.3.3
+                  HS 0.44"    80 dots    50 dots    15 dots
+  423  HS 21 mm   HS 21 mm    20.90 mm   16.9 mm    1.98 mm  →2.3.4 →2.3.4 →2.3.3
+                  HS 0.82"    148 dots   120 dots   14 dots
+
+  NOTE: Hereafter, ID 415 to 419 is referred to as HS 2:1 and ID 420 to 423 is
+  referred to as HS 3:1.
+
+-------------------------------------------------------------------------------
+                                                                    [ page 16 ]
+
+(b) Split size
+
+  [Diagram: split-size tape layout. Numbered dimensions:]
+    1 Width                          2 Length
+    3 Print area width               4 Print area length
+      (maximum printing width)
+    5 Width offset                   6 Length offset
+    7 Overall width                  8 Width of overall print area
+
+  TZe tape
+  Columns: (1) Width  (3) Print area width  (5) Width offset
+           (7) Overall width = [3] × Split number + [5] × 2
+           (8) Width of overall print area = [3] × Split number
+
+  ID   Tape   Design.   (1)      (3)      (5)     (7) Overall     (8) Overall
+                        Width    Print    Width   width          print area
+                                 area w.  offset
+  ---  -----  --------  -------  -------  ------  --------------  -------------
+  279  12 mm  12 mm×2   11.9 mm  9.90 mm  0.98mm  9.90mm×2        9.90mm×2
+              0.47"×2   84 dots  70 dots  7 dots  +0.98mm×2       70 dots×2
+                                                  70 dots×2
+                                                  +7 dots×2
+  285  12 mm  12 mm×3   11.9 mm  9.90 mm  0.98mm  9.90mm×3        9.90mm×3
+              0.47"×3   84 dots  70 dots  7 dots  +0.98mm×2       70 dots×3
+                                                  70 dots×3
+                                                  +7 dots×2
+  291  12 mm  12 mm×4   11.9 mm  9.90 mm  0.98mm  9.90mm×4        9.90mm×4
+              0.47"×4   84 dots  70 dots  7 dots  +0.98mm×2       70 dots×4
+                                                  70 dots×4
+                                                  +7 dots×2
+  280  18 mm  18 mm×2   18.1 mm  15.8 mm  1.12mm  15.8mm×2        15.8mm×2
+              0.70"×2   128 dots 112 dots 8 dots  +1.12mm×2       112 dots×2
+                                                  112 dots×2
+                                                  +8 dots×2
+  286  18 mm  18 mm×3   18.1 mm  15.8 mm  1.12mm  15.8mm×3        15.8mm×3
+              0.70"×3   128 dots 112 dots 8 dots  +1.12mm×2       112 dots×3
+                                                  112 dots×3
+                                                  +8 dots×2
+  292  18 mm  18 mm×4   18.1 mm  15.8 mm  1.12mm  15.8mm×4        15.8mm×4
+              0.70"×4   128 dots 112 dots 8 dots  +1.12mm×2       112 dots×4
+                                                  112 dots×4
+                                                  +8 dots×2
+  281  24 mm  24 mm×2   24.0 mm  18.1 mm  2.96mm  18.1mm×2        18.1mm×2
+              0.94"×2   170 dots 128 dots 21 dots +2.96mm×2       128 dots×2
+                                                  128 dots×2
+                                                  +21 dots×2
+  287  24 mm  24 mm×3   24.0 mm  18.1 mm  2.96mm  18.1mm×3        18.1mm×3
+              0.94"×3   170 dots 128 dots 21 dots +2.96mm×2       128 dots×3
+                                                  128 dots×3
+                                                  +21 dots×2
+  293  24 mm  24 mm×4   24.0 mm  18.1 mm  2.96mm  18.1mm×4        18.1mm×4
+              0.94"×4   170 dots 128 dots 21 dots +2.96mm×2       128 dots×4
+                                                  128 dots×4
+                                                  +21 dots×2
+
+
+-------------------------------------------------------------------------------
+2.3.3 Feed amount                                                   [ page 17 ]
+-------------------------------------------------------------------------------
+
+The feed amount (left and right margins) is defined below.
+
+  180 dpi × 180 dpi
+  ------------------------------------------------------------------------------
+                  Minimum margin   Maximum margin   Minimum margin setting with
+  Type            setting          setting          no precut
+                                                    (Unrelated to driver)
+  --------------  ---------------  ---------------  ---------------------------
+  Normal          2 mm             127 mm           24.3 mm
+                  0.08"            5"               0.96"
+                  14 dots          900 dots         172 dots
+
+  180 dpi × 360 dpi
+  ------------------------------------------------------------------------------
+                  Minimum margin   Maximum margin   Minimum margin setting with
+  Type            setting          setting          no precut
+                                                    (Unrelated to driver)
+  --------------  ---------------  ---------------  ---------------------------
+  Normal          2 mm             127 mm           24.3 mm
+                  0.08"            5"               0.96"
+                  28 dots          1800 dots        344 dots
+
+
+-------------------------------------------------------------------------------
+2.3.4 Maximum and minimum lengths                                   [ page 18 ]
+-------------------------------------------------------------------------------
+
+The maximum and minimum lengths are defined below.
+
+  TZe tape
+
+  180 dpi × 180 dpi
+  Type       Minimum length      Maximum length
+  ---------  ----------------    ----------------
+  Normal     4.4 mm              1000 mm
+             0.18"               39.37"
+             31 dots             7086 dots
+
+  180 dpi × 360 dpi
+  Type       Minimum length      Maximum length
+  ---------  ----------------    ----------------
+  Normal     4.2 mm              1000 mm
+             0.17"               39.37"
+             60 dots             14172 dots
+
+  Heat-Shrink Tube
+  Type       Minimum length      Maximum length
+  ---------  ----------------    ----------------
+  Normal     4.4 mm              500 mm
+             0.18"               19.69"
+             31 dots             3543 dots
+
+  * The minimum length with the driver (minimum print data length: 2 mm margins
+    × 2 + minimum print area) is based on the machine specifications (due to the
+    machine cutter position), and the minimum length of tape that can be fed out
+    is 24.5 mm.
+    For example, even when the minimum print data of 4.4 mm is created, the
+    print result will be the 24.5 mm of tape shown below, since the minimum
+    length of tape that can be fed out is 24.5 mm.
+
+    In other words, the print data will be on 24.5 mm of tape when the print
+    data length is 24.5 mm or less.
+
+
+-------------------------------------------------------------------------------
+2.3.5 Raster line                                                   [ page 19 ]
+-------------------------------------------------------------------------------
+
+As shown below, the parts with data to be printed are converted with "raster
+graphics transfer", and the parts with no data are converted with "zero raster
+graphics". On the actual tape, margins (feed) are added specified with "various
+mode settings" at the beginning and the end.
+
+  [Diagram: Feeding direction / Expansion direction. Raster lines are laid out
+   across the print area in the sequence:
+     RasterLine 1, RasterLine 2, RasterLine 3, Zero Raster 1, Zero Raster 1,
+     RasterLine 4 ...
+   with the print head positioned along the feeding direction.]
+
+The following shows the relationship between the raster graphics parameters and
+the pixels.
+
+  [Diagram: Each byte is sent MSB → LSB.
+     1st B (MSB..LSB)  2nd B (MSB..LSB)  3rd B (MSB..LSB)  4th B (MSB..LSB) ...]
+
+-------------------------------------------------------------------------------
+                                                                    [ page 20 ]
+
+Total number of pins: 128 pin
+
+  [Diagram: A raster line is built from bytes. The first byte corresponds to
+   the pins for the right margin (top), followed by the print-area pins, and
+   the last byte corresponds to the pins for the left margin (bottom, 0 pin).
+   Left and right margins frame the print area. Pins run along the feeding
+   direction on the print head.
+     - Number of pins for right margin
+     - Number of print area pins
+     - Number of pins for left margin
+     - Total number of pins]
+
+  TZe tape:
+
+  Tape Type   Pins for       Print area   Pins for        Bytes for raster
+              left margin    pins         right margin     graphics transfer
+  ---------   -----------    ----------   ------------    -----------------
+  3.5 mm      52             24           52              16
+  6 mm        48             32           48              16
+  9 mm        39             50           39              16
+  12 mm       29             70           29              16
+  18 mm       8              112          8               16
+  24 mm       0              128          0               16
+
+-------------------------------------------------------------------------------
+                                                                    [ page 21 ]
+
+  Heat-Shrink Tube:
+
+  Tape Type    Pins for       Print area   Pins for        Bytes for raster
+               left margin    pins         right margin     graphics transfer
+  ----------   -----------    ----------   ------------    -----------------
+  HS 5.8 mm    50             28           50              16
+  HS 8.8 mm    40             48           40              16
+  HS 11.7 mm   31             66           31              16
+  HS 17.7 mm   11             106          11              16
+  HS 23.6 mm   0              128          0               16
+  HS 5.2 mm    54             20           54              16
+  HS 9.0 mm    42             44           42              16
+  HS 11.2 mm   39             50           39              16
+  HS 21.0 mm   4              120          4               16
+
+
+===============================================================================
+3. PRINT COMMAND LIST                                                [ page 22 ]
+===============================================================================
+
+  ASCII Code    Binary Code    Description
+  -----------   -----------    ------------------------------------------------
+  NULL          00             Invalidate
+  ESC @         1B 40          Initialize
+  ESC i S       1B 69 53       Status information request
+                               *The PT-E550W/PT-P750W does not support this
+                                command.
+  ESC i a       1B 69 61       Switch dynamic command mode
+  ESC i !       1B 69 21       Switch automatic status notification mode
+  ESC i z       1B 69 7A       Print information command
+  ESC i M       1B 69 4D       Various mode settings
+  ESC i A       1B 69 41       Specify the page number in "cut each * labels"
+                               *The PT-P710BT does not support this command.
+  ESC i K       1B 69 4B       Advanced mode settings
+  ESC i d       1B 69 64       Specify margin amount (feed amount)
+  M             4D             Select compression mode
+  G             47             Raster graphics transfer
+  Z             5A             Zero raster graphics
+  FF            0C             Print command
+  Control-Z     1A             Print command with feeding
+
+
+===============================================================================
+4. PRINTING COMMAND DETAILS                                          [ page 23 ]
+===============================================================================
+
+-------------------------------------------------------------------------------
+NULL   Invalidate
+-------------------------------------------------------------------------------
+
+  ASCII:        NULL
+  Hexadecimal:  00
+
+Description
+  • Skipped
+  • If data transmission is to be stopped midway, send the "initialize" command
+    after sending the "invalidate" command for the appropriate number of bytes
+    to return to the receiving state, where the print buffer is cleared.
+
+
+-------------------------------------------------------------------------------
+ESC @   Initialize
+-------------------------------------------------------------------------------
+
+  ASCII:        ESC @
+  Hexadecimal:  1B 40
+
+Description
+  • Initializes mode settings.
+  • Also used to cancel printing.
+
+
+-------------------------------------------------------------------------------
+ESC i S   Status information request
+-------------------------------------------------------------------------------
+
+  ASCII:        ESC i S
+  Hexadecimal:  1B 69 53
+
+Description
+  • Send a request to the printer for status information. For details on the
+    status, refer to the previous section.
+  • The size is fixed at 32 bytes.
+
+  Note
+  Before sending print data to the printer, this command should be sent once.
+  Since error information is automatically sent by the printer during printing,
+  do not send this command while printing.
+  For details on transmission of the status, refer to "5. Flow Charts".
+
+-------------------------------------------------------------------------------
+                                                                [ pages 24-25 ]
+
+Status information (32 bytes)
+
+  No.  Offset  Size  Name                          Value / Reference
+  ---  ------  ----  ---------------------------   ------------------------------
+   1   0       1     Print head mark               Fixed at 80h
+   2   1       1     Size                          Fixed at 20h
+   3   2       1     Brother code                  Fixed at "B" (42h)
+   4   3       1     Series code                   Fixed at "0" (30h)
+   5   4       1     Model code                    PT-E550W: Fixed at "f" (66h)
+                                                   PT-P750W: Fixed at "h" (68h)
+   6   5       1     Country code                  Fixed at "0" (30h)
+   7   6       1     Reserved                      Fixed at "00h"
+   8   7       1     Reserved                      Fixed at 00h
+   9   8       1     Error information 1           Refer to table (1) below.
+  10   9       1     Error information 2           Refer to table (2) below.
+  11   10      1     Media width                   Refer to table (3) below.
+  12   11      1     Media type                    Refer to table (4) below.
+  13   12      1     Number of colors              Fixed at 00h
+  14   13      1     Fonts                         Fixed at 00h
+  15   14      1     Reserved                      No set
+  16   15      1     Mode                          Value specified where the
+                                                   "various mode settings"
+                                                   command. 00h if not specified
+  17   16      1     Density                       Fixed at 00h
+  18   17      1     Media length                  Refer to table (3) below.
+  19   18      1     Status type                   Refer to table (5) below.
+  20   19      1     Phase type                    (see below)
+  21   20      1     Phase number                  Refer to table (6) below.
+                     (higher order bytes)
+  22   21      1     Phase number                  Refer to table (6) below.
+                     (lower order bytes)
+  23   22      1     Notification number           Refer to table (7) below.
+  24   23      1     Expansion area                Fixed at 00h
+                     (number of bytes)
+  25   24      1     Tape color information        Refer to table (8) below.
+  26   25      1     Text color information        Refer to table (9) below.
+  27   26      4     Hardware settings             Sets the default hardware
+                                                   information to be used for
+                                                   checking
+  31   30      1     Reserved                      Fixed at 00h
+  32   31      1     Reserved                      Fixed at 00h
+
+-------------------------------------------------------------------------------
+                                                                    [ page 26 ]
+
+(1) Error information 1
+
+  Flag    Mask   Definition
+  -----   ----   -----------------------
+  Bit 0   01h    "No media" error
+  Bit 1   02h    (Not used)
+  Bit 2   04h    Cutter jam
+  Bit 3   08h    Weak batteries
+  Bit 4   10h    (Not used)
+  Bit 5   20h    (Not used)
+  Bit 6   40h    High-voltage adapter
+  Bit 7   80h    (Not used)
+
+
+(2) Error information 2
+
+  Flag    Mask   Definition
+  -----   ----   -----------------------------------------------
+  Bit 0   01h    "Replace media" error (with a serial connecting)
+                 Wrong media
+  Bit 1   02h    (Not used)
+  Bit 2   04h    (Not used)
+  Bit 3   08h    (Not used)
+  Bit 4   10h    "Cover open" error
+  Bit 5   20h    Overheating error
+  Bit 6   40h    (Not used)
+  Bit 7   80h    (Not used)
+
+-------------------------------------------------------------------------------
+                                                                    [ page 27 ]
+
+(3) Media width and length
+
+  The media width and length is described in millimeters. 0~255 (0 to FFh)
+
+  (a) TZe tape
+  * Media Width: The tape width is indicated in millimeters.
+  * Media Length: Fixed at 00h
+
+  Media       Media Width    Media Length
+  --------    -----------    ------------
+  No tape     0              0
+  3.5 mm      4              0
+  6 mm        6              0
+  9 mm        9              0
+  12 mm       12             0
+  18 mm       18             0
+  24 mm       24             0
+
+
+(4) Media type
+
+  Media Type                       Value
+  ------------------------------   -----
+  No media                         00h
+  Laminated tape                   01h
+  Non-laminated tape               03h
+  Heat-Shrink Tube (HS 2:1)        11h
+  Heat-Shrink Tube (HS 3:1)        17h
+  Incompatible tape                FFh
+
+-------------------------------------------------------------------------------
+                                                                    [ page 28 ]
+
+(5) Status type
+
+  Status Type                Value
+  ------------------------   -------------
+  Reply to status request    00h
+  Printing completed         01h
+  Error occurred             02h
+  Exit IF mode               03h (not used)
+  Turned off                 04h
+  Notification               05h
+  Phase change               06h
+  (Not used)                 07h to 20h
+  (Reserved)                 21h to FFh
+
+  If an error occurred during printing, the printer returns the error status.
+
+
+(6) Phase type and phase number
+
+  If the phase number is not used, both are fixed at 00h.
+
+  Phase State                                Phase Type
+  --------------------------------------     ----------
+  Editing state (reception possible)         00h
+  Printing state                             01h
+
+  Editing state
+  Phase                          Value(Dec.)  Higher Order   Lower Order
+  ----------------------------   -----------  ------------   -----------
+  Editing state (reception       0            00h            00h
+  possible)
+  Feed                           1            00h            01h
+
+  Printing state
+  Phase                          Value(Dec.)  Higher Order   Lower Order
+  ----------------------------   -----------  ------------   -----------
+  Printing                       0            00h            00h
+  (Not used)                     10           00h            0Ah
+  Cover open while receiving     20           00h            14h
+  (Not used)                     25           00h            19h
+
+-------------------------------------------------------------------------------
+                                                                    [ page 29 ]
+
+(7) Notification number
+
+  Notification      Value
+  ---------------   -----
+  Not available     00h
+  Cover open        01h
+  Cover closed      02h
+
+
+(8) Tape color information
+
+  Tape color                    Tape color ID   Notes
+  --------------------------    -------------   ------------------------
+  White                         01h
+  Other                         02h
+  Clear                         03h
+  Red                           04h
+  Blue                          05h
+  Yellow                        06h
+  Green                         07h
+  Black                         08h
+  Clear (White text)            09h
+  Matte White                   20h
+  Matte Clear                   21h
+  Matte Silver                  22h
+  Satin Gold                    23h
+  Satin Silver                  24h
+  Blue (D)                      30h             TZe-535 (12mm)
+                                                TZe-545 (18mm)
+                                                TZe-555 (24mm)
+  Red (D)                       31h             TZe-435 (12mm)
+  Fluorescent Orange            40h
+  Fluorescent Yellow            41h
+  Berry Pink (S)                50h             TZe-MQP35
+  Light Gray (S)                51h             TZe-MQL35
+  Lime Green (S)                52h             TZe-MQG35
+  Yellow (F)                    60h
+  Pink (F)                      61h
+  Blue (F)                      62h
+  White (Heat-shrink Tube)      70h
+  White (Flex. ID)              90h
+-------------------------------------------------------------------------------
+                                                                    [ page 30 ]
+  Yellow (Flex. ID)             91h
+  Clearning                     F0h
+  Stencil                       F1h
+  Incompatible                  FFh
+
+
+(9) Text color information
+
+  Text color        Text color ID
+  ---------------   -------------
+  White             01h
+  Red               04h
+  Blue              05h
+  Black             08h
+  Gold              0Ah
+  Blue (F)          62h
+  Cleaning          F0h
+  Stencil           F1h
+  Other             02h
+  Incompatible      FFh
+
+
+-------------------------------------------------------------------------------
+ESC i a   Switch dynamic command mode                               [ page 31 ]
+-------------------------------------------------------------------------------
+
+  ASCII:        ESC i a {n1}
+  Hexadecimal:  1B 69 61 {n1}
+
+Parameters
+  Definitions of {n1}:
+    0: ESC/P mode
+    1: Raster mode (Be sure to switch to this mode.)
+    3: P-touch Template mode
+
+Description
+  • Dynamically switches between the printer's command modes. A printer that
+    receives this command operates in the specified command mode until the
+    printer is turned off.
+  • The printer must be switched to raster mode before raster data is sent to
+    it. Therefore, send this command to switch the printer to raster mode.
+  • The PT-P710BT does not support ESC/P mode and P-touch Template mode.
+
+
+-------------------------------------------------------------------------------
+ESC i !   Switch automatic status notification mode
+-------------------------------------------------------------------------------
+
+  ASCII:        ESC i ! {n1}
+  Hexadecimal:  1B 69 21 {n1}
+
+Parameters
+  Definitions of {n1}
+    0: Notify. (default)
+    1: Do not notify.
+
+Description
+  • Dynamically switches whether the automatic status notification is given
+    during printing. A printer that receives this command operates in the
+    specified command mode until the printer is turned off.
+  • Use this command when building a system where the status is not obtained
+    using a status information request.
+
+
+-------------------------------------------------------------------------------
+ESC i z   Print information command                                 [ page 32 ]
+-------------------------------------------------------------------------------
+
+  ASCII:        ESC i z {n1} {n2} {n3} {n4} {n5} {n6} {n7} {n8} {n9} {n10}
+  Hexadecimal:  1B 69 7A {n1} {n2} {n3} {n4} {n5} {n6} {n7} {n8} {n9} {n10}
+
+Description
+  • Specifies the print information.
+  • Definitions of {n1} through {n10}
+
+  {n1}:      Valid flag; Specifies which values are valid
+             #define PI_KIND    0x02   // Media type
+             #define PI_WIDTH   0x04   // Media width
+             #define PI_LENGTH  0x08   // Media length
+             #define PI_QUALITY 0x40   // Priority given to print quality
+                                       //   (Not used)
+             #define PI_RECOVER 0x80   // Printer recovery always on
+
+  {n2}:      Media type
+             No tape:                     00h
+             Laminated tape:              01h
+             Non-laminated tape:          03h
+             Heat-Shrink Tube (HS 2:1):   11h
+             Heat-Shrink Tube (HS 3:1):   17h
+             Incompatible tape:           FFh
+
+  {n3}:      Media width (mm)
+  {n4}:      Media length (mm)
+             For the media of width 24 mm, specify as n3=18h and n4=00h.
+             n4 is normally 00h, regardless of the paper length.
+
+  {n5-n8}:   Raster number = n8*256*256*256 + n7*256*256 + n6*256 + n5
+             If the media is not correctly loaded into the printer when the
+             valid flag for PI_KIND, PI_WIDTH and PI_LENGTH are set to "ON", an
+             error status is returned (Bit 0 of "(2) Error information 2" is set
+             to "ON".)
+
+  {n9}:      Starting page: 0
+             Other pages:   1
+
+  {n10}:     Fixed at 0
+
+
+-------------------------------------------------------------------------------
+ESC i M   Various mode settings                                     [ page 33 ]
+-------------------------------------------------------------------------------
+
+  ASCII:        ESC i M {n1}
+  Hexadecimal:  1B 69 4D {n1}
+
+Parameters
+  Definitions of {n1}
+  The meaning of each bit in a 1-byte parameter is described below.
+    0~5 bit: Not used
+    6 bit:   Auto cut        1. Automatically cuts   0. Does not automatically
+                                                        cut
+    7 bit:   Mirror printing 1. Mirror printing      0. No mirror printing
+
+
+-------------------------------------------------------------------------------
+ESC i K   Advanced mode settings
+-------------------------------------------------------------------------------
+
+  ASCII:        ESC i K {n1}
+  Hexadecimal:  1B 69 4B {n1}
+
+Parameters
+  Definitions of {n1}
+  The meaning of each bit in a 1-byte parameter is described below.
+    0~1 bit, 5 bit: Not used
+    2 bit: Half cut
+           1: Half cut on   0: Half cut off
+           *Not used in PT-P710BT.
+    3 bit: No chain printing
+           When printing multiple copies, the labels are fed after the last one
+           is printed.
+           1: No chain printing (Feeding and cutting are performed after the
+              last one is printed.)
+           0: Chain printing (Feeding and cutting are not performed after the
+              last one is printed.)
+    4 bit: Special tape (no cutting)
+           Labels are not cut when special tape is installed.
+           1: Special tape (no cutting) ON   0: Special tape (no cutting) OFF
+    6 bit: Hig-resolution printing
+           1: High-resolution printing   0: Normal printing
+    7 bit: No buffer clearing when printing
+           The expansion buffer of the machine is not cleared with the "no
+           buffer clearing when printing" command.
+           If this command is sent when the data of the first label is printed
+           (it is specified between the "initialize" command and the print
+           data), printing is possible only if a print command is sent with the
+           second or later label.
+           1. No buffer clearing when printing ON
+           0. No buffer clearing when printing OFF
+
+
+-------------------------------------------------------------------------------
+ESC i d   Specify margin amount (feed amount)                       [ page 34 ]
+-------------------------------------------------------------------------------
+
+  ASCII:        ESC i d {n1} {n2}
+  Hexadecimal:  1B 69 64 {n1} {n2}
+
+Description
+  • Specifies the amount of the margins.
+  • Margin amount (dots) = n1 + n2*256
+
+    (a) Continuous length tape
+        [Diagram: Paper → Margin amount → Tape → Print area, with the cut line
+         shown at the margin.]
+
+
+-------------------------------------------------------------------------------
+ESC i A   Specify the page number in "cut each * labels"
+-------------------------------------------------------------------------------
+
+  ASCII:        ESC i A {n}
+  Hexadecimal:  1B 69 41 {n}
+
+Parameters
+  Definitions of {n}
+    Page number = n1 (1 - 99)
+    Default is 1 (cut each label).
+
+Description
+  When "auto cut" is specified, you can specify page number (1 - 99) in "cut
+  each * labels".
+
+
+-------------------------------------------------------------------------------
+M   Select compression mode                                         [ page 35 ]
+-------------------------------------------------------------------------------
+
+  ASCII:        M {n}
+  Hexadecimal:  4D {n}
+
+Parameters
+  Definitions of {n}
+    0   No-compression mode (Enabled)
+    1   Reserved (Disabled)
+    2   TIFF (Enabled)
+
+Description
+  • Selects the compression mode. Data compression is available only for data
+    in raster graphic transfer.
+
+  [TIFF (Pack Bits)]
+  • 1-byte units
+  • If the same data is repeated, the number of data units and that 1 byte of
+    data are specified.
+    If different data is in a series, the number of data items and all of the
+    different data are specified.
+  • If the same data is repeated, the number of data units is specified as the
+    actual number minus 1, expressed as a negative number.
+    If different data is in a series, the number of data units is specified as
+    the number of bytes minus 1, expressed as a positive number.
+  • If the above process results in more than 16 bytes of compressed data, the
+    data is treated as being all different. As a result, the data will be 17
+    bytes, including the 1 byte that specifies the data length.
+
+Example
+  1 raster of raster graphics transfer:
+
+    Without compression:
+       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+       00 00 00 00 00 22 22 23 BA BF A2 22 2B ……
+
+    With compression:
+       ED 00   FF 22   05 23 BA BF A2 22 2B …
+       └─ a ─┘ └─ b ─┘ └───────── c ─────────┘
+
+    a. Since "00h" is repeated for 20 bytes,
+       20d -> 19d -> 13h changed into a negative number is EDh.
+       Therefore: ED 00
+    b. Since "22h" is repeated for 2 bytes,
+       2d -> 1d -> 1h changed into a negative number is FFh.
+       Therefore: FF 22
+    c. The following 6 bytes remain unchanged. 6d -> 5d -> 5h
+       Therefore: 05 23 BA BF A2 22 2B
+
+    Continue for the remaining number of bytes for the uncompressed data. Even
+    if 00h continues until the end, it cannot be omitted.
+
+-------------------------------------------------------------------------------
+                                                                    [ page 36 ]
+
+Explanation of "TIFF compression mode"
+
+  With compression, the data for the "raster graphics transfer" command is
+  based on 16 bytes of the total number of pins (128). As shown below, with no
+  compression, the sum of the number of offset pins and the number of pins
+  within the print area is the byte data. However, with compression, the number
+  of unused pins is also added to the data. In other words, with compression,
+  this becomes 16 bytes when it is expanded by the printer, regardless of the
+  tape width.
+
+  [Diagram: Comparison of a raster line WITH compression versus WITH NO
+   compression. From 0 pin downward: number of offset pins (tape margin),
+   number of print-area pins (print area), number of unused pins. Pins run
+   along the feeding direction on the print head; first byte at top, last byte
+   at bottom.]
+
+
+-------------------------------------------------------------------------------
+G   Raster graphics transfer                                        [ page 37 ]
+-------------------------------------------------------------------------------
+
+  ASCII:        G {n1} {n2} {d1} ... {dk}
+  Hexadecimal:  47 {n1} {n2} {d1} ... {dk}
+
+Description
+  • Transfers the specified number of bytes (k) of data.
+  • The data is expanded by overwriting from the position where the margin was
+    added.
+  • If the expanded data does not reach the end of the expansion buffer, the
+    remainder is filled with 0 data.
+  • If the expanded data exceeds the end of the expansion buffer, the excess is
+    cut off.
+
+Parameters
+  {n1}{n2}   Specified number of bytes k = n1 + n2*256
+             0000h ≦ Specified number of bytes k ≦ First positive number that
+             exceeds the value of the number of print head pins divided by 8
+             (Gauss number)
+  {n}        Number of bytes of raster data (d1 to dk)
+             However, use the following value if no compression is specified as
+             the compression mode.
+             n = 16
+  {d1~dn}    Raster data.
+
+
+-------------------------------------------------------------------------------
+Z   Zero raster graphics
+-------------------------------------------------------------------------------
+
+  ASCII:        Z
+  Hexadecimal:  5A
+
+Description
+  • Fills raster line with 0 data.
+
+
+-------------------------------------------------------------------------------
+FF   Print command
+-------------------------------------------------------------------------------
+
+  ASCII:        FF
+  Hexadecimal:  0C
+
+Description
+  • Used as a print command at the end of pages other than the last page when
+    multiple pages are printed.
+
+
+-------------------------------------------------------------------------------
+Control-Z   Print command with feeding                              [ page 38 ]
+-------------------------------------------------------------------------------
+
+  ASCII:        Control-Z
+  Hexadecimal:  1A
+
+Description
+  • Used as a print command at the end of the last page.
+
+
+===============================================================================
+5. FLOW CHARTS                                                       [ page 39 ]
+===============================================================================
+
+Normally, printing is performed as buffered printing. However, if the printer
+is connected via USB and uncompressed data is received, concurrent printing is
+performed.
+
+Note:
+  Concurrent printing: Printing starts immediately after the printer receives
+                       print data.
+  Buffered printing:   Printing starts after one page of print data is received.
+
+The flow charts below show the exchange of commands, print data and status
+between the computer (host) and the printer. "→" indicates data sent from the
+host to the printer; "←" indicates status sent from the printer to the host.
+
+
+-------------------------------------------------------------------------------
+5.1 Concurrent printing normal flow for USB connection              [ page 40 ]
+-------------------------------------------------------------------------------
+
+Host note: If there are no problems with the printer status (media, etc.), the
+data is transmitted. If there is a problem, an error appears.
+
+  Host → Printer   Invalidate                    Printer: reset.
+  Host → Printer   Initialize                    Printer: initialized.
+  Host → Printer   Status information request     (host READ)
+                                                 Printer: status (media, etc.)
+                                                 is checked and a response is
+                                                 sent.
+  Printer → Host   Status (response to status information request)
+  Host → Printer   Sending control codes         Printer: data received.
+                                                 (host: "Displaying sending")
+  Host → Printer   Sending raster data           Printer: begins printing
+                                                 without waiting for a print
+                                                 command.
+  Printer → Host   Status (Phase change: "Printing")
+                                                 Printer: printing.
+  Host → Printer   Sending raster data
+  Host → Printer   Sending raster data
+  Host → Printer   Sending raster data
+  Host → Printer   Sending a print command       (host: "Displaying printing";
+                   (print command with feeding    host READ)
+                   (1A) for the last page or
+                   print command (0C) for other
+                   pages)
+                   ← Phase change "Printing" received.
+  Printer → Host   Status ("Printing completed")
+                   ← "Printing completed" received.
+                                                 Printer: printing of the 1st
+                                                 page is actually not finished,
+                                                 but the "Printing completed"
+                                                 status and "Waiting to receive"
+                                                 phase are sent.
+  Printer → Host   Status (Phase change: "Waiting to receive")
+                   Host: finishing process for printing page 1.
+  Host → Printer   Sending control code / raster data  (data for page 2)
+  Printer → Host   Status (Phase change: "Printing")
+                                                 Printer: printing 1st page,
+                                                 then printing 2nd page.
+  Host → Printer   Sending raster data
+  Host → Printer   Sending raster data
+  Host → Printer   Sending raster data
+
+
+-------------------------------------------------------------------------------
+5.2 Concurrent printing error flow for USB connection               [ page 41 ]
+    (when feeding at the end of the page)
+-------------------------------------------------------------------------------
+
+Host note: If there are no problems with the printer status (media, etc.), the
+data is transmitted. If there is a problem, an error appears.
+
+  Host → Printer   Invalidate                    Printer: reset.
+  Host → Printer   Initialize                    Printer: initialized.
+  Host → Printer   Status information request     (host READ)
+                                                 Printer: status is checked and
+                                                 a response is sent.
+  Printer → Host   Status (response to status information request)
+  Host → Printer   Sending control codes         Printer: data received.
+  Host → Printer   Sending raster data           Printer: begins printing
+                                                 without waiting for a print
+                                                 command.
+  Printer → Host   Status (Phase change: "Printing")
+                                                 Printer: printing.
+  Host → Printer   Sending raster data
+  Host → Printer   Sending a print command       (host READ)
+                   (1A last page / 0C other)
+                   ← Phase change "Printing" received.
+  Printer → Host   Status ("Printing completed")
+                   ← "Printing completed" received.
+                                                 Printer: printing of the 1st
+                                                 page is actually not finished,
+                                                 but the "Printing completed"
+                                                 status and "Waiting to receive"
+                                                 phase are sent.
+  Printer → Host   Status (Phase change: "Waiting to receive")
+                   Host: finishing process for printing page 1.
+  Host → Printer   Sending control code / raster data  (data for page 2)
+  Printer → Host   Status ("Error occurred")     Printer: error occurred.
+  Host → Printer   Sending raster data           Printer: if an error occurs,
+  Host → Printer   Sending raster data           all data read from the
+                                                 computer is cleared.
+  Host → Printer   Sending a print command       (host READ)
+                   (1A last page / 0C other)
+                   ← "Error Occured" received. An error appears.
+                   When restarted, data is resent starting with the 1st page
+                   since "Printing" for the 2nd page is not received.
+  Host: resending process for data of 1st page.
+  Host → Printer   Initialize                    Printer: reprinting 1st page.
+
+
+-------------------------------------------------------------------------------
+5.3 Concurrent printing error flow for USB connection               [ page 42 ]
+    (with a concurrent printing error such as end of tape)
+-------------------------------------------------------------------------------
+
+Host note: If there are no problems with the printer status (media, etc.), the
+data is transmitted. If there is a problem, an error appears.
+
+  Host → Printer   Invalidate                    Printer: any jobs with errors
+                                                 remaining in the printer are
+                                                 cleared.
+  Host → Printer   Initialize                    Printer: initialized.
+  Host → Printer   Status information request     (host READ)
+                                                 Printer: status is checked and
+                                                 a response is sent.
+  Printer → Host   Status (response to status information request)
+  Host → Printer   Sending control codes         Printer: data received.
+  Host → Printer   Sending raster data           Printer: begins printing
+                                                 without waiting for a print
+                                                 command.
+  Printer → Host   Status (Phase change: "Printing")
+                                                 Printer: printing.
+  Host → Printer   Sending raster data
+  Host → Printer   Sending a print command       (host READ)
+                   (1A last page / 0C other)
+                   ← Phase change "Printing" received.
+  Printer → Host   Status ("Printing completed")
+                   ← "Printing completed" received.
+  Printer → Host   Status (Phase change: "Waiting to receive")
+                   ← Phase change "Waiting to receive" received.
+                                                 Printer: printing of the 1st
+                                                 page is actually not finished,
+                                                 but the "Printing completed"
+                                                 status and "Waiting to receive"
+                                                 phase are sent.
+                   Host: finishing process for printing page 1.
+  Host → Printer   Sending control code / raster data  (data for page 2)
+  Printer → Host   Status (Phase change: "Printing")
+                                                 Printer: printing 1st page,
+                                                 then printing 2nd page.
+  Host → Printer   Sending raster data
+  Printer → Host   Status ("Error Occurred")     Printer: error occurred.
+  Host → Printer   Sending raster data           Printer: if an error occurs,
+                                                 all data read from the computer
+                                                 is cleared.
+  Host → Printer   Sending a print command       (host READ)
+                   (1A last page / 0C other)
+                   ← Phase change "Printing" received.
+                   ← "Error Occured" received. An error appears.
+                   When restarted, data is resent starting with the 2nd page
+                   since "Printing" for the 2nd page is received.
+  Host: resending process for data of 2nd page.
+  Host → Printer   Initialize                    Printer: reprinting 2nd page.
+
+
+-------------------------------------------------------------------------------
+5.4 Buffered printing normal flow for USB connection                [ page 43 ]
+-------------------------------------------------------------------------------
+
+Host note: If there are no problems with the printer status (media, etc.), the
+data is transmitted. If there is a problem, an error appears.
+
+  Host → Printer   Invalidate                    Printer: reset.
+  Host → Printer   Initialize                    Printer: initialized.
+  Host → Printer   Status information request     (host READ)
+                                                 Printer: status is checked and
+                                                 a response is sent.
+  Printer → Host   Status (response to status information request)
+  Host → Printer   Sending control codes         Printer: data received.
+  Host → Printer   Sending raster data
+  Host → Printer   Sending raster data
+  Host → Printer   Sending raster data
+  Host → Printer   Sending raster data
+  Host → Printer   Sending a print command       Printer: printing.
+                   (1A last page / 0C other)
+  Printer → Host   Status (Phase change: "Printing")   (host READ)
+                   ← Phase change "Printing" received.
+  Printer → Host   Status ("Printing completed")
+                   ← "Printing completed" received.
+  Printer → Host   Status (Phase change: "Waiting to receive")
+                   ← Phase change "Waiting to receive" received.
+                   Host: finishing process for printing 1st page.
+                                                 Printer: printing 1st page,
+                                                 then printing 2nd page.
+  Host → Printer   Sending control codes         (data for 2nd page)
+  Host → Printer   Sending raster data
+  Host → Printer   Sending raster data
+
+
+-------------------------------------------------------------------------------
+5.5 Buffered printing error flow for USB connection                 [ page 44 ]
+-------------------------------------------------------------------------------
+
+Host note: If there are no problems with the printer status (media, etc.), the
+data is transmitted. If there is a problem, an error appears.
+
+  Host → Printer   Invalidate                    Printer: reset.
+  Host → Printer   Initialize                    Printer: initialized.
+  Host → Printer   Status information request     (host READ)
+                                                 Printer: status is checked and
+                                                 a response is sent.
+  Printer → Host   Status (response to status information request)
+                   or an error is displayed
+  Host → Printer   Sending control codes         Printer: data received.
+  Host → Printer   Sending raster data
+  Host → Printer   Sending a print command       Printer: printing.
+                   (1A last page / 0C other)
+  Printer → Host   Status (Phase change: "Printing")   (host READ)
+                   ← Phase change "Printing" received.
+  Printer → Host   Status ("Error Occurred")     Printer: error occurred.
+
+
+-------------------------------------------------------------------------------
+5.6 Normal Flow for Network (Standard TCP/IP port) Connection       [ page 45 ]
+-------------------------------------------------------------------------------
+
+  * With a network connection, print data from the operating system's port
+    monitor is simply sent as is.
+
+  When it prints 2 pages of data:
+
+  Host note: Divide print data into a particular size, and send it.
+
+  Host → Printer   Sending raster data
+  Host → Printer   Sending raster data
+  Host → Printer   Sending raster data
+  Host → Printer   Sending raster data           Printer: receive data.
+  Host → Printer   Sending raster data
+  Host → Printer   Sending raster data           Printer: as one page of data
+                   Host: end process for         is received in the printer
+                   printing 1st page.            buffer, start printing.
+  Host → Printer   Sending raster data           Printer: printing 1st page.
+                   Host: sending data for
+                   2nd page.
+  Host → Printer   Sending raster data           Printer: printer buffer is full
+                   ← BUSY
+  Host → Printer   Sending raster data
+                   ← BUSY
+  Host → Printer   Sending raster data
+                   ← BUSY
+  Host → Printer   Sending raster data
+                   ← BUSY
+  Host → Printer   Sending raster data
+  Host → Printer   Sending raster data
+  Host → Printer   Sending raster data
+  Host → Printer   Sending raster data           Printer: as 2nd page data is
+                                                 received in the printer buffer,
+                                                 start printing.
+  Host → Printer   Sending raster data           Printer: printing 2nd page.
+                   Host: at host side, as sending print data has completed, the
+                   print job data is erased. The print job is treated as
+                   completed at the printer side.
+
+
+===============================================================================
+APPENDIX A: USB SPECIFICATIONS                                      [ page 46 ]
+===============================================================================
+
+  USB specifications 1.1
+
+  Item                          Description
+  ---------------------------   -------------------------------------------------
+  Vendor ID                     0x04F9
+  Product ID                    PT-E550W:  0x2060
+                                PT-P750W:  0x2062
+                                PT-P710BT: 0x20af
+  Class                         Printer
+  Character string for          Character string descriptor: 0x01
+    manufacturer                0x0409: "Brother"
+  Character string for          Character string descriptor: 0x03
+    serial number               0x0409: "000" + Last nine digits of the
+                                printer's serial number
+  Device speed                  Full speed
+  Number of interfaces          1 (No alternate interfaces)
+  Power supply                  Self-powered (As a printer class, Bus power is
+                                also set to "ON".)
+  End point 1                   In bulk (Sends the status from the printer to
+                                the computer.)
+                                Maximum packet size: 64 bytes
+  End point 2                   Out bulk (Sends print commands and data from the
+                                computer to the printer.)
+                                Maximum packet size: 64 bytes
+
+
+===============================================================================
+APPENDIX B: INTRODUCING THE BROTHER DEVELOPER CENTER                [ page 47 ]
+===============================================================================
+
+Useful information for developers, such as applications, tools, SDKs as well as
+FAQs, are provided in the Brother Developer Center.
+
+  http://www.brother.com/product/dev/index.htm
+
+
+===============================================================================
+End of document — Raster Command Reference, PT-E550W/P750W/P710BT, Version 1.02
+===============================================================================
+
