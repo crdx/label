@@ -2,24 +2,34 @@ package ptouch
 
 import "fmt"
 
-// Raster Command Reference for PT-E550W/P750W/P710BT:
-// https://download.brother.com/welcome/docp100064/cv_pte550wp750wp710bt_eng_raster_102.pdf
+// Raster Command Reference for PT-E550W/P750W/P710BT
+//
+// pdf: https://download.brother.com/welcome/docp100064/cv_pte550wp750wp710bt_eng_raster_102.pdf
+// txt: docs/reference.txt
+//
+// The reference.txt:START-END line number ranges below point at the relevant part of the
+// reference.
 
+// Command codes are summarised in the command list (reference.txt:737-760); each trailing range
+// points at the command's detail in section 4.
 var (
-	cmdInitialize               = []byte{0x1b, 0x40}
-	cmdDumpStatus               = []byte{0x1b, 0x69, 0x53}
-	cmdSetRasterMode            = []byte{0x1b, 0x69, 0x61, 0x01} // 0: ESC/P, 1: Raster, 3: P-touch Template
-	cmdNotifyModePrefix         = []byte{0x1b, 0x69, 0x21}
-	cmdSetPrintPropertyPrefix   = []byte{0x1b, 0x69, 0x7a}
-	cmdSetPrintModePrefix       = []byte{0x1b, 0x69, 0x4d}
-	cmdSetExtendedModePrefix    = []byte{0x1b, 0x69, 0x4b}
-	cmdSetFeedAmountPrefix      = []byte{0x1b, 0x69, 0x64}
-	cmdSetCompressionModePrefix = []byte{0x4d}
-	cmdRasterTransfer           = []byte{0x47}
-	cmdPrint                    = []byte{0x0c} // FF: print without feeding (non-last page)
-	cmdPrintAndEject            = []byte{0x1a} // Control-Z: print with feeding (last page)
+	cmdInitialize               = []byte{0x1b, 0x40}             // ESC @ (reference.txt:781-791)
+	cmdDumpStatus               = []byte{0x1b, 0x69, 0x53}       // ESC i S (reference.txt:793-812)
+	cmdSetRasterMode            = []byte{0x1b, 0x69, 0x61, 0x01} // ESC i a; 0: ESC/P, 1: Raster, 3: P-touch Template (reference.txt:1032-1053)
+	cmdNotifyModePrefix         = []byte{0x1b, 0x69, 0x21}       // ESC i ! (reference.txt:1054-1073)
+	cmdSetPrintPropertyPrefix   = []byte{0x1b, 0x69, 0x7a}       // ESC i z (reference.txt:1074-1117)
+	cmdSetPrintModePrefix       = []byte{0x1b, 0x69, 0x4d}       // ESC i M (reference.txt:1118-1133)
+	cmdSetExtendedModePrefix    = []byte{0x1b, 0x69, 0x4b}       // ESC i K (reference.txt:1134-1170)
+	cmdSetFeedAmountPrefix      = []byte{0x1b, 0x69, 0x64}       // ESC i d (reference.txt:1171-1203)
+	cmdSetCompressionModePrefix = []byte{0x4d}                   // M (reference.txt:1204-1277)
+	cmdRasterTransfer           = []byte{0x47}                   // G (reference.txt:1278-1305)
+	cmdPrint                    = []byte{0x0c}                   // FF: print without feeding, non-last page (reference.txt:1317-1327)
+	cmdPrintAndEject            = []byte{0x1a}                   // Control-Z: print with feeding, last page (reference.txt:1329-1338)
 )
 
+// Offsets into the 32-byte status response (reference.txt:813-855). Byte 6 is "Reserved" in that
+// table (an E550W/P750W-oriented doc), but the PT-P710BT reports battery level there; see the
+// BatteryStatusType note below.
 const (
 	statusOffsetModel      = 4
 	statusOffsetBattery    = 6
@@ -33,15 +43,21 @@ const (
 	statusOffsetFontColor  = 25
 )
 
+// Enable-bit flags for the print information command, ESC i z (reference.txt:1074-1117).
 const (
 	printPropertyEnableBitWidth           = 0x04
 	printPropertyEnableBitRecoverOnDevice = 0x80
 )
 
+// Model code is status byte 4 (reference.txt:821-825), which lists only E550W (0x66 'f') and P750W
+// (0x68 'h'). The PT-P710BT's 0x76 ('v') is in no public table found; ptouch-print keys off the USB
+// product id instead, so this was read off the device and fits the ASCII-letter pattern. See
+// docs/reference-notes.md.
 type Model int
 
 const modelPTP710BT Model = 0x76 // PT-P710BT
 
+// StatusType is the printer status type, table (5) (reference.txt:922-937).
 type StatusType int
 
 const (
@@ -50,6 +66,7 @@ const (
 	statusTypePowerOff          StatusType = 0x04 // Power off
 )
 
+// Error1Type holds the error information 1 bit flags, table (1) (reference.txt:858-870).
 type Error1Type int
 
 const (
@@ -59,6 +76,7 @@ const (
 	error1TooHighVoltageAC Error1Type = 0x40 // High-voltage adapter
 )
 
+// Error2Type holds the error information 2 bit flags, table (2) (reference.txt:872-887).
 type Error2Type int
 
 const (
@@ -67,8 +85,10 @@ const (
 	error2Hot          Error2Type = 0x20 // Too hot
 )
 
+// TapeWidth is the media width in mm, table (3) (reference.txt:889-906).
 type TapeWidth int
 
+// MediaType is the loaded media type, table (4) (reference.txt:908-920).
 type MediaType int
 
 const (
@@ -80,6 +100,7 @@ const (
 	mediaTypeInvalid        MediaType = 0xFF // Invalid tape type
 )
 
+// TapeColor is the tape colour information, table (8) (reference.txt:975-1013).
 type TapeColor int
 
 const (
@@ -115,6 +136,7 @@ const (
 	tapeColorInvalid           TapeColor = 0xFF
 )
 
+// FontColor is the text colour information, table (9) (reference.txt:1015-1029).
 type FontColor int
 
 const (
@@ -130,6 +152,9 @@ const (
 	fontColorInvalid  FontColor = 0xFF
 )
 
+// BatteryStatusType decodes status byte 6. The raster reference marks that byte reserved, so these
+// values come from Brother's Mobile SDK (BRPtouchPrinterStatus.batteryLevel): 0 full, 1 medium,
+// 2 weak, 3 needs charging, 4 on AC adapter. See docs/reference-notes.md.
 type BatteryStatusType int
 
 const (
@@ -304,6 +329,9 @@ func (self *Status) Errors() []string {
 	return errors
 }
 
+// PrintableDots returns the print-area width in dots for the loaded tape. The dot counts are the
+// TZe "Print area width" column of the page-size table (reference.txt:493-509); media types come
+// from table (4) (reference.txt:908-920).
 func (self *Status) PrintableDots() (int, error) {
 	switch self.MediaType {
 	case mediaTypeLaminated, mediaTypeNonLaminated:
