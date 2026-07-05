@@ -1,6 +1,6 @@
 # label
 
-**label** prints text labels on the Brother PT-P710BT over USB or bluetooth.
+**label** prints text labels on the Brother PT-P710BT over USB or Bluetooth.
 
 ## Installation
 
@@ -16,7 +16,7 @@ Usage:
     label [options] status
 ```
 
-The printer is auto-detected: USB is tried first, then bluetooth. Note that bluetooth is only supported on Linux.
+The printer is auto-detected: USB is tried first, then Bluetooth. Note that Bluetooth is only supported on Linux.
 
 The default font is Spleen for its aesthetics when printed on the PT-P710BT, but this is subject to change.
 
@@ -32,9 +32,9 @@ sudo udevadm control --reload
 
 Then disconnect and reconnect the printer.
 
-### bluetooth
+### Bluetooth
 
-bluetooth uses Linux RFCOMM sockets and BlueZ, so it is only supported on Linux.
+Bluetooth uses Linux RFCOMM sockets and BlueZ, so it is only supported on Linux.
 
 Pair the printer once with `bluetoothctl` (use PIN `0000` if prompted):
 
@@ -47,7 +47,7 @@ Pair the printer once with `bluetoothctl` (use PIN `0000` if prompted):
 ## Credits
 
 - [ka2n/ptouchgo](https://github.com/ka2n/ptouchgo) for the driver and raster protocol implementation.
-- [robby-cornelissen/pt-p710bt-label-maker](https://github.com/robby-cornelissen/pt-p710bt-label-maker) for the bluetooth protocol details.
+- [robby-cornelissen/pt-p710bt-label-maker](https://github.com/robby-cornelissen/pt-p710bt-label-maker) for the Bluetooth protocol details.
 
 ## Contributions
 
