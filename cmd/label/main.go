@@ -12,6 +12,8 @@ import (
 	"crdx.org/logger"
 )
 
+const glyphHeight = 50
+
 func getUsage() string {
 	return `
 		Usage:
@@ -119,7 +121,7 @@ func printText(printer ptouch.Printer, opts Opts) error {
 		return err
 	}
 
-	img, err := render.Text(opts.Text, printableDots, ptouch.PrintHeadWidth)
+	img, err := render.Text(opts.Text, min(glyphHeight, printableDots), ptouch.PrintHeadWidth)
 	if err != nil {
 		return fmt.Errorf("render text: %w", err)
 	}
