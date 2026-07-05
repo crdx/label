@@ -16,15 +16,9 @@ Usage:
     label [options] status
 ```
 
-Multi-word text must be quoted:
+The printer is auto-detected: USB is tried first, then bluetooth. Note that bluetooth is only supported on Linux.
 
-```sh
-label print "hello world"
-```
-
-The printer is auto-detected: USB is tried first, then bluetooth.
-
-Text is rendered with the Go Mono typeface, sized to fill the printable height of the loaded tape (read from the printer). Heat-shrink tube is not supported.
+The default font is Spleen for its aesthetics when printed on the PT-P710BT, but this is subject to change.
 
 ### USB permissions
 
@@ -38,14 +32,13 @@ sudo udevadm control --reload
 
 Then disconnect and reconnect the printer.
 
-### Bluetooth
+### bluetooth
 
-Bluetooth uses Linux RFCOMM sockets and BlueZ, so it is only supported on Linux.
+bluetooth uses Linux RFCOMM sockets and BlueZ, so it is only supported on Linux.
 
 Pair the printer once with `bluetoothctl` (use PIN `0000` if prompted):
 
 ```sh
-bluetoothctl
 [bluetooth]# scan on
 [bluetooth]# pair A4:C1:38:AB:CD:EF
 [bluetooth]# trust A4:C1:38:AB:CD:EF
@@ -53,8 +46,8 @@ bluetoothctl
 
 ## Credits
 
-- [ka2n/ptouchgo](https://github.com/ka2n/ptouchgo) — the driver and raster protocol implementation.
-- [robby-cornelissen/pt-p710bt-label-maker](https://github.com/robby-cornelissen/pt-p710bt-label-maker) — bluetooth print flow.
+- [ka2n/ptouchgo](https://github.com/ka2n/ptouchgo) for the driver and raster protocol implementation.
+- [robby-cornelissen/pt-p710bt-label-maker](https://github.com/robby-cornelissen/pt-p710bt-label-maker) for the bluetooth protocol details.
 
 ## Contributions
 

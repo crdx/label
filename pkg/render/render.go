@@ -12,7 +12,7 @@ import (
 	"golang.org/x/image/math/fixed"
 )
 
-//go:embed fonts/JetBrainsMono-Regular.ttf
+//go:embed fonts/spleen-32x64.otf
 var fontData []byte
 
 const (
