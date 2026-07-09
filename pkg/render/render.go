@@ -53,15 +53,15 @@ func Text(content string, glyphHeight int, imageHeight int) (*image.Gray, error)
 	if err != nil {
 		return nil, fmt.Errorf("create reference face: %w", err)
 	}
-	defer func() { _ = referenceFace.Close() }()
+	referenceMetrics := referenceFace.Metrics()
+	_ = referenceFace.Close()
 
-	referenceBounds, _ := font.BoundString(referenceFace, content)
-	referenceInk := float64(referenceBounds.Max.Y-referenceBounds.Min.Y) / 64
-	if referenceInk <= 0 {
-		return nil, fmt.Errorf("text has no printable glyphs")
+	referenceSpan := float64(referenceMetrics.CapHeight+referenceMetrics.Descent) / 64
+	if referenceSpan <= 0 {
+		return nil, fmt.Errorf("font has no usable vertical metrics")
 	}
 
-	size := referenceSize * float64(glyphHeight) / referenceInk
+	size := referenceSize * float64(glyphHeight) / referenceSpan
 	face, err := newFace(size)
 	if err != nil {
 		return nil, fmt.Errorf("create face: %w", err)
@@ -70,6 +70,9 @@ func Text(content string, glyphHeight int, imageHeight int) (*image.Gray, error)
 
 	bounds, _ := font.BoundString(face, content)
 	inkHeight := (bounds.Max.Y - bounds.Min.Y).Ceil()
+	if inkHeight <= 0 {
+		return nil, fmt.Errorf("text has no printable glyphs")
+	}
 
 	if inkHeight > imageHeight {
 		_ = face.Close()
