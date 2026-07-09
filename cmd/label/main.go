@@ -64,15 +64,14 @@ func run(opts Opts) error {
 
 	switch {
 	case opts.Print:
-		return printText(printer, opts)
+		return printLabel(printer, opts)
 	case opts.Status:
-		return printStatus(printer)
-	default:
-		return fmt.Errorf("no command given")
+		return showStatus(printer)
 	}
+	return fmt.Errorf("no command given")
 }
 
-func printStatus(printer ptouch.Printer) error {
+func showStatus(printer ptouch.Printer) error {
 	status, err := printer.Status()
 	if err != nil {
 		return err
@@ -110,7 +109,7 @@ func printStatus(printer ptouch.Printer) error {
 	return nil
 }
 
-func printText(printer ptouch.Printer, opts Opts) error {
+func printLabel(printer ptouch.Printer, opts Opts) error {
 	status, err := printer.Status()
 	if err != nil {
 		return err
