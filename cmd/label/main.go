@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"crdx.org/col"
 	"crdx.org/duckopt/v2"
 	"crdx.org/label/pkg/driver"
+	"crdx.org/label/pkg/kitty"
 	"crdx.org/label/pkg/ptouch"
 	"crdx.org/label/pkg/render"
 	"crdx.org/logger"
@@ -21,15 +23,17 @@ func getUsage() string {
 			$0 [options] status
 
 		Options:
-			--chain   Don't cut the label
+			--chain        Don't cut the label
+			-p, --preview  Preview the label in the terminal instead of printing it
 	`
 }
 
 type Opts struct {
-	Print  bool   `docopt:"print"`
-	Status bool   `docopt:"status"`
-	Text   string `docopt:"<text>"`
-	Chain  bool   `docopt:"--chain"`
+	Print   bool   `docopt:"print"`
+	Status  bool   `docopt:"status"`
+	Text    string `docopt:"<text>"`
+	Chain   bool   `docopt:"--chain"`
+	Preview bool   `docopt:"--preview"`
 }
 
 func main() {
@@ -46,6 +50,10 @@ func main() {
 func run(opts Opts) error {
 	if opts.Print && strings.TrimSpace(opts.Text) == "" {
 		return fmt.Errorf("text must not be empty")
+	}
+
+	if opts.Print && opts.Preview {
+		return previewLabel(opts)
 	}
 
 	printer, err := ptouch.Open()
@@ -139,6 +147,15 @@ func printText(printer ptouch.Printer, opts Opts) error {
 	logger.Info("printing on %dmm %s tape", status.TapeWidth, status.MediaType)
 
 	return printer.Print(packed, len(data)/bytesWidth, status.TapeWidth, !opts.Chain)
+}
+
+func previewLabel(opts Opts) error {
+	img, err := render.Text(opts.Text, min(glyphHeight, ptouch.PrintHeadWidth), ptouch.PrintHeadWidth)
+	if err != nil {
+		return fmt.Errorf("render text: %w", err)
+	}
+
+	return kitty.PrintImage(os.Stdout, img)
 }
 
 func row(name string, value string) {
