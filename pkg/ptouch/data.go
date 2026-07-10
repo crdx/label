@@ -329,9 +329,6 @@ func (self *Status) Errors() []string {
 	return errors
 }
 
-// PrintableDots returns the print-area width in dots for the loaded tape. The dot counts are the
-// TZe "Print area width" column of the page-size table (reference.txt:493-509); media types come
-// from table (4) (reference.txt:908-920).
 func (self *Status) PrintableDots() (int, error) {
 	switch self.MediaType {
 	case mediaTypeLaminated, mediaTypeNonLaminated:
@@ -343,7 +340,11 @@ func (self *Status) PrintableDots() (int, error) {
 		return 0, fmt.Errorf("unsupported media type: %s", self.MediaType)
 	}
 
-	switch self.TapeWidth {
+	return PrintableDots(self.TapeWidth)
+}
+
+func PrintableDots(width TapeWidth) (int, error) {
+	switch width {
 	case 4:
 		return 24, nil
 	case 6:
@@ -357,7 +358,26 @@ func (self *Status) PrintableDots() (int, error) {
 	case 24:
 		return 128, nil
 	default:
-		return 0, fmt.Errorf("unsupported tape width: %dmm", self.TapeWidth)
+		return 0, fmt.Errorf("unsupported tape width: %dmm", width)
+	}
+}
+
+func TapeDots(width TapeWidth) (int, error) {
+	switch width {
+	case 4:
+		return 24, nil
+	case 6:
+		return 42, nil
+	case 9:
+		return 64, nil
+	case 12:
+		return 84, nil
+	case 18:
+		return 128, nil
+	case 24:
+		return 170, nil
+	default:
+		return 0, fmt.Errorf("unsupported tape width: %dmm", width)
 	}
 }
 

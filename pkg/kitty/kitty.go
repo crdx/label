@@ -6,14 +6,12 @@ import (
 	"fmt"
 	"image"
 	"image/png"
-	"io"
+	"os"
 
 	"github.com/samber/lo"
 )
 
-const chunkSize = 4096
-
-func PrintImage(fd io.Writer, img image.Image) error {
+func PrintImage(img image.Image) error {
 	var buffa bytes.Buffer
 	if err := png.Encode(&buffa, img); err != nil {
 		return fmt.Errorf("encode png: %w", err)
@@ -21,8 +19,8 @@ func PrintImage(fd io.Writer, img image.Image) error {
 
 	encoded := base64.StdEncoding.EncodeToString(buffa.Bytes())
 
-	for offset := 0; offset < len(encoded); offset += chunkSize {
-		end := min(offset+chunkSize, len(encoded))
+	for offset := 0; offset < len(encoded); offset += 4096 {
+		end := min(offset+4096, len(encoded))
 		hasMore := end < len(encoded)
 
 		control := fmt.Sprintf("m=%d", lo.Ternary(hasMore, 1, 0))
@@ -30,11 +28,11 @@ func PrintImage(fd io.Writer, img image.Image) error {
 			control = "a=T,f=100," + control
 		}
 
-		if _, err := fmt.Fprintf(fd, "\x1b_G%s;%s\x1b\\", control, encoded[offset:end]); err != nil {
+		if _, err := fmt.Fprintf(os.Stdout, "\x1b_G%s;%s\x1b\\", control, encoded[offset:end]); err != nil {
 			return err
 		}
 	}
 
-	_, err := fmt.Fprintln(fd)
+	_, err := fmt.Fprintln(os.Stdout)
 	return err
 }

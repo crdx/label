@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"strconv"
 	"strings"
 
 	"crdx.org/col"
@@ -19,21 +19,23 @@ const glyphHeight = 50
 func getUsage() string {
 	return `
 		Usage:
-			$0 [options] print <text>
-			$0 [options] status
+			$0 print [--chain] <text>
+			$0 preview [-m <mm>] <text>
+			$0 status
 
 		Options:
-			--chain        Don't cut the label
-			-p, --preview  Preview the label in the terminal instead of printing it
+			--chain          Don't cut the label
+			-m, --mm <mm>    Tape width in mm to preview for (default: loaded tape)
 	`
 }
 
 type Opts struct {
 	Print   bool   `docopt:"print"`
+	Preview bool   `docopt:"preview"`
 	Status  bool   `docopt:"status"`
 	Text    string `docopt:"<text>"`
 	Chain   bool   `docopt:"--chain"`
-	Preview bool   `docopt:"--preview"`
+	MM      string `docopt:"--mm"`
 }
 
 func main() {
@@ -48,11 +50,11 @@ func main() {
 }
 
 func run(opts Opts) error {
-	if opts.Print && strings.TrimSpace(opts.Text) == "" {
+	if (opts.Print || opts.Preview) && strings.TrimSpace(opts.Text) == "" {
 		return fmt.Errorf("text must not be empty")
 	}
 
-	if opts.Print && opts.Preview {
+	if opts.Preview {
 		return previewLabel(opts)
 	}
 
@@ -149,12 +151,43 @@ func printLabel(printer ptouch.Printer, opts Opts) error {
 }
 
 func previewLabel(opts Opts) error {
-	img, err := render.Text(opts.Text, min(glyphHeight, ptouch.PrintHeadWidth), ptouch.PrintHeadWidth)
+	width, err := resolveTapeWidth(opts.MM)
+	if err != nil {
+		return err
+	}
+
+	printableDots, err := ptouch.PrintableDots(width)
+	if err != nil {
+		return err
+	}
+
+	tapeDots, err := ptouch.TapeDots(width)
+	if err != nil {
+		return err
+	}
+
+	img, err := render.Text(opts.Text, min(glyphHeight, printableDots), tapeDots)
 	if err != nil {
 		return fmt.Errorf("render text: %w", err)
 	}
 
-	return kitty.PrintImage(os.Stdout, img)
+	return kitty.PrintImage(img)
+}
+
+func resolveTapeWidth(mm string) (ptouch.TapeWidth, error) {
+	if mm == "" {
+		width, err := ptouch.LoadedTapeWidth()
+		if err != nil {
+			return 0, fmt.Errorf("%w (pass -m to preview without a printer)", err)
+		}
+		return width, nil
+	}
+
+	width, err := strconv.Atoi(mm)
+	if err != nil {
+		return 0, fmt.Errorf("invalid tape width %q: must be a number in mm", mm)
+	}
+	return ptouch.TapeWidth(width), nil
 }
 
 func row(name string, value string) {

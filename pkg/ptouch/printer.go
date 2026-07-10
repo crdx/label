@@ -63,6 +63,21 @@ func (self *Printer) Close() {
 	_ = self.Connection.Close()
 }
 
+func LoadedTapeWidth() (TapeWidth, error) {
+	printer, err := Open()
+	if err != nil {
+		return 0, err
+	}
+	defer printer.Close()
+
+	status, err := printer.Status()
+	if err != nil {
+		return 0, err
+	}
+
+	return status.TapeWidth, nil
+}
+
 func (self *Printer) Print(data []byte, rasterLines int, width TapeWidth, cut bool) error {
 	if err := self.setRasterMode(); err != nil {
 		return err

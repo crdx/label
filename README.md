@@ -12,9 +12,15 @@ go install crdx.org/label/cmd/label@latest
 
 ```
 Usage:
-    label [options] print <text>
-    label [options] status
+    label print [--chain] <text>
+    label preview [-m <mm>] <text>
+    label status
 ```
+
+
+`print` sends the label to the printer. `--chain` prevents the printer from cutting the label. This is useful to avoid the wasted label square between prints. If you forget to remove the flag on your final print, double tap the power button to make it cut and eject the remainder.
+
+`preview` renders in the terminal instead, using the Kitty graphics protocol. It's sized for the given tape width if passed, or tries to get the current width from a connected printer.
 
 The printer is auto-detected: USB is tried first, then Bluetooth. Note that Bluetooth is only supported on Linux.
 
