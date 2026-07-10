@@ -52,6 +52,7 @@ func Open() (Printer, error) {
 	return printer, nil
 }
 
+// Status requests the current printer status. ESC i S (reference.txt:793-812).
 func (self *Printer) Status() (*Status, error) {
 	if _, err := self.Connection.Write(cmdDumpStatus); err != nil {
 		return nil, err
@@ -78,6 +79,7 @@ func LoadedTapeWidth() (TapeWidth, error) {
 	return status.TapeWidth, nil
 }
 
+// Print runs the full print command sequence (reference.txt:170-181).
 func (self *Printer) Print(data []byte, rasterLines int, width TapeWidth, cut bool) error {
 	if err := self.setRasterMode(); err != nil {
 		return err
@@ -116,6 +118,7 @@ func (self *Printer) Print(data []byte, rasterLines int, width TapeWidth, cut bo
 	return self.waitForPrintCompletion()
 }
 
+// reset sends the 100-byte invalidate preamble then initialize. NULL / ESC @ (reference.txt:767-791).
 func (self *Printer) reset() error {
 	if _, err := self.Connection.Write(make([]byte, 100)); err != nil {
 		return err
@@ -124,6 +127,7 @@ func (self *Printer) reset() error {
 	return err
 }
 
+// readStatus parses the 32-byte status response (reference.txt:813-855).
 func (self *Printer) readStatus() (*Status, error) {
 	buf := make([]byte, 32)
 	if _, err := io.ReadFull(self.Connection, buf); err != nil {
@@ -148,6 +152,7 @@ func (self *Printer) readStatus() (*Status, error) {
 	}, nil
 }
 
+// waitForPrintCompletion polls the status type until printing ends. Table (5) (reference.txt:922-937).
 func (self *Printer) waitForPrintCompletion() error {
 	for {
 		status, err := self.readStatus()
@@ -171,11 +176,13 @@ func (self *Printer) waitForPrintCompletion() error {
 	}
 }
 
+// setRasterMode switches the printer to raster mode. ESC i a (reference.txt:1032-1053).
 func (self *Printer) setRasterMode() error {
 	_, err := self.Connection.Write(cmdSetRasterMode)
 	return err
 }
 
+// setNotificationMode toggles automatic status notifications. ESC i ! (reference.txt:1054-1073).
 func (self *Printer) setNotificationMode(enabled bool) error {
 	var value byte
 	if enabled {
@@ -190,6 +197,7 @@ func (self *Printer) setNotificationMode(enabled bool) error {
 	return err
 }
 
+// setPrintProperty sets the print information. ESC i z (reference.txt:1074-1117).
 func (self *Printer) setPrintProperty(rasterLines int, width TapeWidth) error {
 	var enableFlag int
 
@@ -219,6 +227,7 @@ func (self *Printer) setPrintProperty(rasterLines int, width TapeWidth) error {
 	return err
 }
 
+// setPrintMode sets the various mode settings. ESC i M (reference.txt:1118-1133).
 func (self *Printer) setPrintMode(autocut bool, mirror bool) error {
 	var value int
 	if autocut {
@@ -234,6 +243,7 @@ func (self *Printer) setPrintMode(autocut bool, mirror bool) error {
 	return err
 }
 
+// setExtendedMode sets the advanced mode settings. ESC i K (reference.txt:1134-1170).
 func (self *Printer) setExtendedMode(noChainprint bool, specialTapeDisableCut bool, highDPI bool, noClearBuffer bool) error {
 	var value int
 	if noChainprint {
@@ -258,6 +268,7 @@ func (self *Printer) setExtendedMode(noChainprint bool, specialTapeDisableCut bo
 	return err
 }
 
+// setFeedAmount sets the margin/feed amount. ESC i d (reference.txt:1171-1203).
 func (self *Printer) setFeedAmount(amount int) error {
 	var bytes [2]byte
 	binary.LittleEndian.PutUint16(bytes[:], uint16(amount)) //nolint:gosec // feed amount fits the protocol's 2-byte field
@@ -267,6 +278,7 @@ func (self *Printer) setFeedAmount(amount int) error {
 	return err
 }
 
+// setCompressionModeEnabled selects the compression mode. M (reference.txt:1204-1277).
 func (self *Printer) setCompressionModeEnabled(enabled bool) error {
 	var value byte
 	if enabled {
