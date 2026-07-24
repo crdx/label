@@ -22,7 +22,7 @@ const (
 	maxImageWidth = 10000
 )
 
-func Text(content string, glyphHeight int, imageHeight int) (*image.Gray, error) {
+func Text(content string, glyphHeight int, imageHeight int, soft bool) (*image.Gray, error) {
 	if strings.TrimSpace(content) == "" {
 		return nil, fmt.Errorf("text must not be empty")
 	}
@@ -106,6 +106,16 @@ func Text(content string, glyphHeight int, imageHeight int) (*image.Gray, error)
 		},
 	}
 	drawer.DrawString(content)
+
+	if !soft {
+		for i, value := range img.Pix {
+			if value < 128 {
+				img.Pix[i] = 0
+			} else {
+				img.Pix[i] = 255
+			}
+		}
+	}
 
 	return img, nil
 }

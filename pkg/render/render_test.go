@@ -28,7 +28,7 @@ func TestTextFillsBand(t *testing.T) {
 	const glyphHeight = 70
 	const imageHeight = 128
 
-	img, err := render.Text("Hgjpqy", glyphHeight, imageHeight)
+	img, err := render.Text("Hgjpqy", glyphHeight, imageHeight, false)
 	require.NoError(t, err)
 
 	assert.Equal(t, imageHeight, img.Bounds().Dy())
@@ -57,7 +57,7 @@ func TestTextErrors(t *testing.T) {
 		{"non-positive glyph height", "x", 0, 128},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
-			_, err := render.Text(testCase.content, testCase.glyphHeight, testCase.imageHeight)
+			_, err := render.Text(testCase.content, testCase.glyphHeight, testCase.imageHeight, false)
 			assert.Error(t, err)
 		})
 	}

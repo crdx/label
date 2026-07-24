@@ -19,12 +19,13 @@ const glyphHeight = 50
 func getUsage() string {
 	return `
 		Usage:
-			$0 print [--chain] <text>
-			$0 preview [-m <mm>] <text>
+			$0 print [--chain] [-s] <text>
+			$0 preview [-m <mm>] [-s] <text>
 			$0 status
 
 		Options:
 			--chain          Don't cut the label
+			-s, --soft       Keep greyscale antialiasing instead of 1-bit output
 			-m, --mm <mm>    Tape width in mm to preview for (default: loaded tape)
 	`
 }
@@ -35,6 +36,7 @@ type Opts struct {
 	Status  bool   `docopt:"status"`
 	Text    string `docopt:"<text>"`
 	Chain   bool   `docopt:"--chain"`
+	Soft    bool   `docopt:"--soft"`
 	MM      string `docopt:"--mm"`
 }
 
@@ -130,7 +132,7 @@ func printLabel(printer ptouch.Printer, opts Opts) error {
 		return err
 	}
 
-	img, err := render.Text(opts.Text, min(glyphHeight, printableDots), ptouch.PrintHeadWidth)
+	img, err := render.Text(opts.Text, min(glyphHeight, printableDots), ptouch.PrintHeadWidth, opts.Soft)
 	if err != nil {
 		return fmt.Errorf("render text: %w", err)
 	}
@@ -166,7 +168,7 @@ func previewLabel(opts Opts) error {
 		return err
 	}
 
-	img, err := render.Text(opts.Text, min(glyphHeight, printableDots), tapeDots)
+	img, err := render.Text(opts.Text, min(glyphHeight, printableDots), tapeDots, opts.Soft)
 	if err != nil {
 		return fmt.Errorf("render text: %w", err)
 	}
